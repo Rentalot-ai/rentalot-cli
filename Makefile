@@ -1,5 +1,5 @@
 
-.PHONY: help install i test test-v test-coverage lint lint-go format clean build run go-install uninstall release patch minor major prep-release
+.PHONY: help install i test test-v test-coverage lint lint-go format clean build run go-install uninstall sync-schema release patch minor major prep-release
 
 MODULE_PATH=github.com/ariel-frischer/rentalot-cli
 VERSION?=$(shell git tag --sort=-v:refname 2>/dev/null | head -1)
@@ -61,6 +61,11 @@ run: ## Run main package
 
 uninstall: ## Uninstall rentalot-cli
 	@./uninstall.sh
+
+sync-schema: ## Sync OpenAPI spec from running rentalot dev server (make dev in ../rentalot)
+	@mkdir -p internal/api
+	@curl -sf http://localhost:3000/api/v1/openapi.json | jq . > internal/api/openapi.json
+	@echo "Wrote internal/api/openapi.json"
 
 ##@ Release
 prep-release: ## Full release flow (usage: make prep-release VERSION=v0.1.0)

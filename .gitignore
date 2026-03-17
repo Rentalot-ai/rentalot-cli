@@ -39,3 +39,10 @@ TODO.md
 # Agent Skills (npx skills add)
 .agents/
 skills-lock.json
+
+# Dolt database files (added by bd init)
+.dolt/
+*.db
+
+# Project-level beads (task tracker)
+.beads/
