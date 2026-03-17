@@ -9,10 +9,8 @@ import (
 var (
 	successFmt = color.New(color.FgGreen)
 	warnFmt    = color.New(color.FgYellow)
-	errFmt     = color.New(color.FgRed)
 	boldFmt    = color.New(color.Bold)
 	fileFmt    = color.New(color.FgCyan)
-	versionFmt = color.New(color.FgMagenta, color.Bold)
 )
 
 // success prints a green success message.
@@ -35,7 +33,3 @@ func fileRef(s string) string {
 	return fileFmt.Sprint(s)
 }
 
-// versionRef returns a magenta bold version string.
-func versionRef(s string) string {
-	return versionFmt.Sprint(s)
-}

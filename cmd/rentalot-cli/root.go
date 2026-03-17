@@ -14,6 +14,8 @@ type contextKey string
 
 const clientKey contextKey = "client"
 
+var globalConfigFile string
+
 var rootCmd = &cobra.Command{
 	Use:     "rentalot-cli",
 	Short:   "CLI tool for managing Rentalot rental properties, contacts, and workflows",
@@ -28,19 +30,25 @@ func init() {
 		}
 	}
 
+	defaultCfgPath, _ := rentalotcli.ConfigPath()
+
 	var noColor bool
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable colored output")
+	rootCmd.PersistentFlags().StringVar(&globalConfigFile, "config", defaultCfgPath, "config file")
+
 	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		if noColor {
 			color.NoColor = true
 		}
-		cfg := rentalotcli.ConfigFromEnv()
+		fileCfg, _ := rentalotcli.LoadConfig(globalConfigFile)
+		cfg := fileCfg.Effective()
 		client := rentalotcli.NewClient(cfg)
 		cmd.SetContext(context.WithValue(cmd.Context(), clientKey, client))
 	}
 
 	rootCmd.SetHelpFunc(colorizedHelp)
 
+	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(versionCmd)
 }
 
