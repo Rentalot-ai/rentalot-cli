@@ -30,7 +30,7 @@ func init() {
 }
 
 func printPlainVersion() {
-	fmt.Printf("rentalot-cli %s\n", version.Version)
+	fmt.Printf("rentalot %s\n", version.Version)
 	fmt.Printf("commit: %s\n", version.Commit)
 	fmt.Printf("built: %s\n", version.BuildDate)
 	fmt.Printf("go: %s\n", runtime.Version())
@@ -43,7 +43,7 @@ func printPrettyVersion() {
 	yellow := color.New(color.FgYellow).SprintFunc()
 
 	fmt.Println()
-	fmt.Println(dim("  rentalot-cli — CLI tool for managing Rentalot rental properties, contacts, and workflows"))
+	fmt.Println(dim("  rentalot — CLI tool for managing Rentalot rental properties, contacts, and workflows"))
 	fmt.Println()
 
 	info := []struct {
