@@ -1,8 +1,8 @@
 #!/bin/sh
-# rentalot-cli Uninstaller
+# rentalot Uninstaller
 set -eu
 
-BINARY_NAME="rentalot-cli"
+BINARY_NAME="rentalot"
 INSTALL_DIR="${RENTALOT_CLI_INSTALL_DIR:-$HOME/.local/bin}"
 TARGET="${INSTALL_DIR}/${BINARY_NAME}"
 

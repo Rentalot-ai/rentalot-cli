@@ -1,6 +1,6 @@
 # Binaries
-rentalot-cli
-bin/rentalot-cli
+rentalot
+bin/rentalot
 dist/
 .release/
 *.exe

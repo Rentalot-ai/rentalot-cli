@@ -1,6 +1,6 @@
 #!/bin/sh
 # shellcheck disable=SC3043  # 'local' is widely supported in practice (dash, ash, busybox)
-# rentalot-cli Installer
+# rentalot Installer
 # Usage: curl -fsSL https://raw.githubusercontent.com/ariel-frischer/rentalot-cli/main/install.sh | sh
 #
 # Environment variables:
@@ -11,7 +11,7 @@ set -eu
 
 # Configuration
 GITHUB_REPO="ariel-frischer/rentalot-cli"
-BINARY_NAME="rentalot-cli"
+BINARY_NAME="rentalot"
 DEFAULT_INSTALL_DIR="$HOME/.local/bin"
 
 # Colors (disabled if not a terminal)
@@ -54,7 +54,7 @@ detect_os() {
         Darwin*) echo "darwin" ;;
         MINGW*|MSYS*|CYGWIN*)
             printf '%bWindows Detected%b\n\n' "${YELLOW}" "${NC}" >&2
-            printf 'rentalot-cli requires WSL (Windows Subsystem for Linux).\n\n' >&2
+            printf 'rentalot requires WSL (Windows Subsystem for Linux).\n\n' >&2
             printf 'Install WSL and try again:\n\n' >&2
             printf '  1. Open PowerShell as Administrator and run:\n' >&2
             printf '     %bwsl --install%b\n\n' "${GREEN}" "${NC}" >&2
@@ -246,7 +246,7 @@ check_path() {
 # Main installation function
 main() {
     echo ""
-    echo "  rentalot-cli Installer"
+    echo "  rentalot Installer"
     echo ""
 
     check_dependencies

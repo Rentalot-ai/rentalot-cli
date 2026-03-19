@@ -24,8 +24,8 @@ install: ## Download dependencies
 
 i: install ## Alias for install
 
-go-install: ## Install rentalot-cli to GOPATH/bin
-	go install ${LDFLAGS} ./cmd/rentalot-cli/
+go-install: ## Install rentalot to GOPATH/bin
+	go install ${LDFLAGS} ./cmd/rentalot/
 
 test: ## Run tests
 	go test ./...
@@ -54,12 +54,12 @@ clean: ## Clean build artifacts
 	rm -rf bin/ coverage.out
 
 build: ## Build binary with version info
-	go build ${LDFLAGS} -o bin/rentalot-cli ./cmd/rentalot-cli/
+	go build ${LDFLAGS} -o bin/rentalot ./cmd/rentalot/
 
 run: ## Run main package
-	go run ${LDFLAGS} ./cmd/rentalot-cli/
+	go run ${LDFLAGS} ./cmd/rentalot/
 
-uninstall: ## Uninstall rentalot-cli
+uninstall: ## Uninstall rentalot
 	@./uninstall.sh
 
 sync-schema: ## Sync OpenAPI spec from running rentalot dev server (make dev in ../rentalot)

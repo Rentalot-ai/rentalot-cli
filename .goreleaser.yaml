@@ -5,8 +5,8 @@ before:
     - go mod tidy
 
 builds:
-  - main: ./cmd/rentalot-cli/
-    binary: rentalot-cli
+  - main: ./cmd/rentalot/
+    binary: rentalot
     ldflags:
       - -s -w
       - -X github.com/ariel-frischer/rentalot-cli/internal/version.Version={{.Version}}
@@ -41,5 +41,5 @@ changelog:
 release:
   gitlab:
     owner: ariel-frischer
-    name: rentalot-cli
+    name: rentalot
   mode: replace

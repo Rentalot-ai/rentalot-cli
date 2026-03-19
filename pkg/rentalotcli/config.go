@@ -17,13 +17,13 @@ type Config struct {
 	BaseURL string `yaml:"base_url,omitempty"`
 }
 
-// ConfigPath returns the default config file path: ~/.config/rentalot-cli/config.yaml.
+// ConfigPath returns the default config file path: ~/.config/rentalot/config.yaml.
 func ConfigPath() (string, error) {
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		return "", fmt.Errorf("getting config dir: %w", err)
 	}
-	return filepath.Join(dir, "rentalot-cli", "config.yaml"), nil
+	return filepath.Join(dir, "rentalot", "config.yaml"), nil
 }
 
 // LoadConfig reads a YAML config file from path.

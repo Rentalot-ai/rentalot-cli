@@ -7,7 +7,7 @@ import (
 )
 
 func TestLoadConfig_Missing(t *testing.T) {
-	cfg, err := LoadConfig("/nonexistent/rentalot-cli/config.yaml")
+	cfg, err := LoadConfig("/nonexistent/rentalot/config.yaml")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

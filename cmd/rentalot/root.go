@@ -17,7 +17,7 @@ const clientKey contextKey = "client"
 var globalConfigFile string
 
 var rootCmd = &cobra.Command{
-	Use:     "rentalot-cli",
+	Use:     "rentalot",
 	Short:   "CLI tool for managing Rentalot rental properties, contacts, and workflows",
 	Version: version.Version,
 }
