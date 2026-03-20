@@ -39,6 +39,9 @@ changelog:
   disable: true
 
 release:
+  github:
+    owner: ariel-frischer
+    name: rentalot
   gitlab:
     owner: ariel-frischer
     name: rentalot
