@@ -26,13 +26,13 @@ go get github.com/Rentalot-ai/rentalot-cli
 ```bash
 git clone https://github.com/Rentalot-ai/rentalot-cli.git
 cd rentalot-cli
-make build    # Binary at bin/rentalot-cli
+make build    # Binary at bin/rentalot
 ```
 
 ## Usage
 
 ```bash
-rentalot-cli --help
+rentalot --help
 ```
 
 ## Library Usage
@@ -99,13 +99,13 @@ make format         # Format code
 
 ```bash
 # Bash
-source <(rentalot-cli completion bash)
+source <(rentalot completion bash)
 
 # Zsh
-source <(rentalot-cli completion zsh)
+source <(rentalot completion zsh)
 
 # Fish
-rentalot-cli completion fish > ~/.config/fish/completions/rentalot-cli.fish
+rentalot completion fish > ~/.config/fish/completions/rentalot.fish
 ```
 
 ## License

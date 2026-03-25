@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"os"
 
 	"github.com/Rentalot-ai/rentalot-cli/internal/version"
 	"github.com/Rentalot-ai/rentalot-cli/pkg/rentalotcli"
@@ -23,12 +22,9 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	// Disable colors when not writing to a terminal.
-	if fi, err := os.Stdout.Stat(); err == nil {
-		if fi.Mode()&os.ModeCharDevice == 0 {
-			color.NoColor = true
-		}
-	}
+	// fatih/color automatically handles NO_COLOR env var, TTY detection,
+	// and TERM=dumb at package init time. The --no-color flag below is
+	// an explicit CLI override for users who want to force no-color.
 
 	defaultCfgPath, _ := rentalotcli.ConfigPath()
 
