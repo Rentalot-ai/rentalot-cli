@@ -3,6 +3,10 @@ versions:
     unreleased:
         added:
             - contacts command group — list, get, create, update, delete subcommands
+            - golangci-lint configuration with gocritic, misspell, and style checks
+            - govulncheck vulnerability scanning in CI pipeline
+            - go mod tidy check in CI to catch dependency drift
+            - CI triggers on dev branch for pre-merge validation
             - properties command group — list, get, create, update, delete subcommands
             - sessions command group — list, get, review subcommands
             - webhooks command group — list, get, create, update, delete, test subcommands
