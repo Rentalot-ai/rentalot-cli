@@ -5,7 +5,7 @@ Thanks for your interest in contributing!
 ## Getting Started
 
 ```bash
-git clone https://gitlab.com/ariel-frischer/rentalot-cli.git
+git clone https://github.com/Rentalot-ai/rentalot-cli.git
 cd rentalot-cli
 make install   # Download dependencies
 make build     # Build binary
@@ -30,7 +30,7 @@ make format    # Format code
 
 ## Reporting Issues
 
-Use [GitHub Issues](https://gitlab.com/ariel-frischer/rentalot-cli/issues). Include:
+Use [GitHub Issues](https://github.com/Rentalot-ai/rentalot-cli/issues). Include:
 - What you expected vs what happened
 - Steps to reproduce
 - `rentalot-cli version` output

@@ -4,8 +4,8 @@ import (
 	"context"
 	"os"
 
-	"github.com/ariel-frischer/rentalot-cli/internal/version"
-	"github.com/ariel-frischer/rentalot-cli/pkg/rentalotcli"
+	"github.com/Rentalot-ai/rentalot-cli/internal/version"
+	"github.com/Rentalot-ai/rentalot-cli/pkg/rentalotcli"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )

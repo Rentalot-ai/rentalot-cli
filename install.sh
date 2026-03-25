@@ -1,7 +1,7 @@
 #!/bin/sh
 # shellcheck disable=SC3043  # 'local' is widely supported in practice (dash, ash, busybox)
 # rentalot Installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/ariel-frischer/rentalot-cli/main/install.sh | sh
+# Usage: curl -fsSL https://raw.githubusercontent.com/Rentalot-ai/rentalot-cli/main/install.sh | sh
 #
 # Environment variables:
 #   RENTALOT_CLI_INSTALL_DIR - Installation directory (default: ~/.local/bin)
@@ -10,7 +10,7 @@
 set -eu
 
 # Configuration
-GITHUB_REPO="ariel-frischer/rentalot-cli"
+GITHUB_REPO="Rentalot-ai/rentalot-cli"
 BINARY_NAME="rentalot"
 DEFAULT_INSTALL_DIR="$HOME/.local/bin"
 

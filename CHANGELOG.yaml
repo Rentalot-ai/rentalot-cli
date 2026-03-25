@@ -18,6 +18,12 @@ versions:
             - config management — load api_key + base_url from ~/.config/rentalot-cli/config.yaml with env var overrides
             - API client package — thin HTTP wrapper with Bearer auth, base URL config, and RFC 9457 error decoding
             - '"config" command group — init, show, set, edit subcommands for managing global config'
+        internal:
+            changed:
+                - migrate repository ownership from ariel-frischer to Rentalot-ai GitHub org
+                - update Go module path to github.com/Rentalot-ai/rentalot-cli
+                - update GoReleaser config to target Rentalot-ai org, remove GitLab release target
+                - update all documentation URLs from GitLab to GitHub
     0.0.1:
         date: 2026-01-01
         added:

@@ -21,6 +21,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - "--limit, --page, --filter" flags on all list commands
 - table rendering for human-readable list output via text/tabwriter
 - unit tests for API client — mock HTTP server, auth header injection, error decoding
+- config management — load api_key + base_url from ~/.config/rentalot-cli/config.yaml with env var overrides
+- API client package — thin HTTP wrapper with Bearer auth, base URL config, and RFC 9457 error decoding
+- "config" command group — init, show, set, edit subcommands for managing global config
 
 ## [0.0.1] - 2026-01-01
 
@@ -28,4 +31,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial project scaffolding
 
-[Unreleased]: https://gitlab.com/ariel-frischer/rentalot-cli/-/compare/v0.0.1...HEAD
+[Unreleased]: https://github.com/Rentalot-ai/rentalot-cli/compare/v0.0.1...HEAD

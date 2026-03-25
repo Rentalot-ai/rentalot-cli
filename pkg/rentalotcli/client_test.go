@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ariel-frischer/rentalot-cli/pkg/rentalotcli"
+	"github.com/Rentalot-ai/rentalot-cli/pkg/rentalotcli"
 )
 
 func newTestClient(t *testing.T, handler http.HandlerFunc) (*rentalotcli.Client, *httptest.Server) {

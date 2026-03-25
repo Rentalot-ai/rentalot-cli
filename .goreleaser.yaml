@@ -9,9 +9,9 @@ builds:
     binary: rentalot
     ldflags:
       - -s -w
-      - -X github.com/ariel-frischer/rentalot-cli/internal/version.Version={{.Version}}
-      - -X github.com/ariel-frischer/rentalot-cli/internal/version.Commit={{.ShortCommit}}
-      - -X github.com/ariel-frischer/rentalot-cli/internal/version.BuildDate={{.Date}}
+      - -X github.com/Rentalot-ai/rentalot-cli/internal/version.Version={{.Version}}
+      - -X github.com/Rentalot-ai/rentalot-cli/internal/version.Commit={{.ShortCommit}}
+      - -X github.com/Rentalot-ai/rentalot-cli/internal/version.BuildDate={{.Date}}
     env:
       - CGO_ENABLED=0
     goos:
@@ -40,9 +40,6 @@ changelog:
 
 release:
   github:
-    owner: ariel-frischer
-    name: rentalot
-  gitlab:
-    owner: ariel-frischer
-    name: rentalot
+    owner: Rentalot-ai
+    name: rentalot-cli
   mode: replace

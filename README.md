@@ -12,19 +12,19 @@ CLI tool for managing Rentalot rental properties, contacts, and workflows
 **Go install**:
 
 ```bash
-go install github.com/ariel-frischer/rentalot-cli/cmd/rentalot-cli@latest
+go install github.com/Rentalot-ai/rentalot-cli/cmd/rentalot@latest
 ```
 
 **Go get** (library):
 
 ```bash
-go get github.com/ariel-frischer/rentalot-cli
+go get github.com/Rentalot-ai/rentalot-cli
 ```
 
 **From source**:
 
 ```bash
-git clone https://gitlab.com/ariel-frischer/rentalot-cli.git
+git clone https://github.com/Rentalot-ai/rentalot-cli.git
 cd rentalot-cli
 make build    # Binary at bin/rentalot-cli
 ```
@@ -38,7 +38,7 @@ rentalot-cli --help
 ## Library Usage
 
 ```go
-import "github.com/ariel-frischer/rentalot-cli/pkg/rentalotcli"
+import "github.com/Rentalot-ai/rentalot-cli/pkg/rentalotcli"
 ```
 
 ### AI Agent Skill
@@ -48,7 +48,7 @@ This project ships a [SKILL.md](.skills/default/SKILL.md) following the [Agent S
 **Quick install with [`skills`](https://skills.sh) CLI** (by Vercel Labs):
 
 ```bash
-npx skills add ariel-frischer/rentalot-cli
+npx skills add Rentalot-ai/rentalot-cli
 ```
 
 <details>
@@ -59,12 +59,12 @@ npx skills add ariel-frischer/rentalot-cli
 ```bash
 # Global — available in all projects
 mkdir -p ~/.claude/skills/rentalot-cli
-curl -fsSL https://raw.githubusercontent.com/ariel-frischer/rentalot-cli/main/.skills/default/SKILL.md \
+curl -fsSL https://raw.githubusercontent.com/Rentalot-ai/rentalot-cli/main/.skills/default/SKILL.md \
   -o ~/.claude/skills/rentalot-cli/SKILL.md
 
 # Project-local — checked into this repo only
 mkdir -p .claude/skills/rentalot-cli
-curl -fsSL https://raw.githubusercontent.com/ariel-frischer/rentalot-cli/main/.skills/default/SKILL.md \
+curl -fsSL https://raw.githubusercontent.com/Rentalot-ai/rentalot-cli/main/.skills/default/SKILL.md \
   -o .claude/skills/rentalot-cli/SKILL.md
 ```
 
@@ -73,12 +73,12 @@ curl -fsSL https://raw.githubusercontent.com/ariel-frischer/rentalot-cli/main/.s
 ```bash
 # Global
 mkdir -p ~/.codex/skills/rentalot-cli
-curl -fsSL https://raw.githubusercontent.com/ariel-frischer/rentalot-cli/main/.skills/default/SKILL.md \
+curl -fsSL https://raw.githubusercontent.com/Rentalot-ai/rentalot-cli/main/.skills/default/SKILL.md \
   -o ~/.codex/skills/rentalot-cli/SKILL.md
 
 # Project-local
 mkdir -p .codex/skills/rentalot-cli
-curl -fsSL https://raw.githubusercontent.com/ariel-frischer/rentalot-cli/main/.skills/default/SKILL.md \
+curl -fsSL https://raw.githubusercontent.com/Rentalot-ai/rentalot-cli/main/.skills/default/SKILL.md \
   -o .codex/skills/rentalot-cli/SKILL.md
 ```
 

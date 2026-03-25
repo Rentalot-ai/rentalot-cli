@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/ariel-frischer/rentalot-cli/internal/version"
+	"github.com/Rentalot-ai/rentalot-cli/internal/version"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )

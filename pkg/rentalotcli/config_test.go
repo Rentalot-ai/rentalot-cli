@@ -113,3 +113,28 @@ func TestConfigFromEnv(t *testing.T) {
 		t.Errorf("BaseURL = %q, want default", cfg.BaseURL)
 	}
 }
+
+func TestConfigPath(t *testing.T) {
+	path, err := ConfigPath()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if path == "" {
+		t.Error("expected non-empty path")
+	}
+	if filepath.Base(path) != "config.yaml" {
+		t.Errorf("expected config.yaml, got %q", filepath.Base(path))
+	}
+}
+
+func TestLoadConfig_InvalidYAML(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "bad.yaml")
+	if err := os.WriteFile(path, []byte(":::invalid"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	_, err := LoadConfig(path)
+	if err == nil {
+		t.Error("expected error for invalid YAML")
+	}
+}

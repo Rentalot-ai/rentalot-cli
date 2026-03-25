@@ -124,7 +124,7 @@ pkg/rentalotcli/         # Public library
 ## Library Usage
 
 ```go
-import "github.com/ariel-frischer/rentalot-cli/pkg/rentalotcli"
+import "github.com/Rentalot-ai/rentalot-cli/pkg/rentalotcli"
 
 cfg := rentalotcli.ConfigFromEnv()
 client := rentalotcli.NewClient(cfg)
