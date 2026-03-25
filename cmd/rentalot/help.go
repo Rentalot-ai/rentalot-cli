@@ -116,11 +116,11 @@ func visibleSubcommands(cmd *cobra.Command) []*cobra.Command {
 }
 
 func maxCommandNameLen(cmds []*cobra.Command) int {
-	max := 0
+	maxLen := 0
 	for _, c := range cmds {
-		if len(c.Name()) > max {
-			max = len(c.Name())
+		if len(c.Name()) > maxLen {
+			maxLen = len(c.Name())
 		}
 	}
-	return max
+	return maxLen
 }

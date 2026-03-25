@@ -21,8 +21,6 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	defer os.RemoveAll(tmp)
-
 	bin := filepath.Join(tmp, "rentalot")
 	if runtime.GOOS == "windows" {
 		bin += ".exe"
@@ -34,7 +32,9 @@ func TestMain(m *testing.M) {
 	}
 	binaryPath = bin
 
-	os.Exit(m.Run())
+	code := m.Run()
+	os.RemoveAll(tmp)
+	os.Exit(code)
 }
 
 // runBinary executes the CLI binary with the given args and env overrides.

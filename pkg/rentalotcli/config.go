@@ -45,14 +45,14 @@ func LoadConfig(path string) (*Config, error) {
 
 // SaveConfig writes cfg as YAML to path, creating parent directories as needed.
 func SaveConfig(cfg *Config, path string) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return fmt.Errorf("creating config dir: %w", err)
 	}
 	data, err := yaml.Marshal(cfg)
 	if err != nil {
 		return fmt.Errorf("marshaling config: %w", err)
 	}
-	if err := os.WriteFile(path, data, 0600); err != nil {
+	if err := os.WriteFile(path, data, 0o600); err != nil {
 		return fmt.Errorf("writing config %s: %w", path, err)
 	}
 	return nil

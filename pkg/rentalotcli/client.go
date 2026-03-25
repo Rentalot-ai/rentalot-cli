@@ -95,7 +95,7 @@ func (c *Client) do(ctx context.Context, method, rawURL string, body *strings.Re
 	if body != nil {
 		req, err = http.NewRequestWithContext(ctx, method, rawURL, body)
 	} else {
-		req, err = http.NewRequestWithContext(ctx, method, rawURL, nil)
+		req, err = http.NewRequestWithContext(ctx, method, rawURL, http.NoBody)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)

@@ -57,7 +57,7 @@ func TestGet_WithQueryParams(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	_ = resp.Body.Close()
 }
 
 func TestGet_EmptyParamsIgnored(t *testing.T) {
@@ -74,7 +74,7 @@ func TestGet_EmptyParamsIgnored(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	_ = resp.Body.Close()
 }
 
 func TestPost_SendsJSONBody(t *testing.T) {
@@ -123,7 +123,7 @@ func TestPatch_SendsJSONBody(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	_ = resp.Body.Close()
 }
 
 func TestDelete_SendsDeleteRequest(t *testing.T) {

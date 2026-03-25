@@ -19,7 +19,7 @@ func TestLoadConfig_Missing(t *testing.T) {
 func TestLoadConfig_Valid(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "config.yaml")
-	if err := os.WriteFile(path, []byte("api_key: ra_test\nbase_url: http://localhost:3000\n"), 0600); err != nil {
+	if err := os.WriteFile(path, []byte("api_key: ra_test\nbase_url: http://localhost:3000\n"), 0o600); err != nil {
 		t.Fatalf("writing config: %v", err)
 	}
 	cfg, err := LoadConfig(path)
@@ -130,7 +130,7 @@ func TestConfigPath(t *testing.T) {
 func TestLoadConfig_InvalidYAML(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "bad.yaml")
-	if err := os.WriteFile(path, []byte(":::invalid"), 0600); err != nil {
+	if err := os.WriteFile(path, []byte(":::invalid"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	_, err := LoadConfig(path)

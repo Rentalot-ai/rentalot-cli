@@ -727,7 +727,7 @@ func TestWebhooksTestCmd_TableOutput(t *testing.T) {
 func TestBulkImportRun_Success(t *testing.T) {
 	dir := t.TempDir()
 	csvPath := dir + "/import.csv"
-	if err := os.WriteFile(csvPath, []byte("name,email\nAlice,a@t.com\n"), 0644); err != nil {
+	if err := os.WriteFile(csvPath, []byte("name,email\nAlice,a@t.com\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -761,7 +761,7 @@ func TestBulkImportRun_Success(t *testing.T) {
 func TestBulkImportRun_NoPoll(t *testing.T) {
 	dir := t.TempDir()
 	csvPath := dir + "/import.csv"
-	if err := os.WriteFile(csvPath, []byte("name,email\nAlice,a@t.com\n"), 0644); err != nil {
+	if err := os.WriteFile(csvPath, []byte("name,email\nAlice,a@t.com\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -782,7 +782,7 @@ func TestBulkImportRun_NoPoll(t *testing.T) {
 func TestBulkImportRun_EmptyFile(t *testing.T) {
 	dir := t.TempDir()
 	csvPath := dir + "/empty.csv"
-	if err := os.WriteFile(csvPath, []byte("name,email\n"), 0644); err != nil {
+	if err := os.WriteFile(csvPath, []byte("name,email\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -802,7 +802,7 @@ func TestBulkImportRun_EmptyFile(t *testing.T) {
 func TestBulkImportRun_APIError(t *testing.T) {
 	dir := t.TempDir()
 	csvPath := dir + "/import.csv"
-	if err := os.WriteFile(csvPath, []byte("name\nAlice\n"), 0644); err != nil {
+	if err := os.WriteFile(csvPath, []byte("name\nAlice\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 

@@ -10,7 +10,7 @@ func TestLoadImportFile_CSV(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "test.csv")
 	content := "name,email,phone\nAlice,alice@example.com,555-0001\nBob,bob@example.com,555-0002\n"
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -33,7 +33,7 @@ func TestLoadImportFile_JSON(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "test.json")
 	content := `[{"name":"Alice","email":"alice@example.com"},{"name":"Bob","email":"bob@example.com"}]`
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -53,7 +53,7 @@ func TestLoadImportFile_JSONUpperCase(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "test.JSON")
 	content := `[{"id":"1"}]`
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -76,7 +76,7 @@ func TestLoadImportFile_MissingFile(t *testing.T) {
 func TestLoadImportFile_InvalidJSON(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "bad.json")
-	if err := os.WriteFile(path, []byte(`{invalid`), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(`{invalid`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -90,7 +90,7 @@ func TestLoadImportFile_EmptyCSV(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "empty.csv")
 	content := "name,email\n"
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -107,7 +107,7 @@ func TestLoadImportFile_CSVTrimHeaders(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "spaces.csv")
 	content := " name , email \nAlice,alice@test.com\n"
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
 

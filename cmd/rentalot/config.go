@@ -62,7 +62,7 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 	if err := rentalotcli.SaveConfig(&rentalotcli.Config{}, globalConfigFile); err != nil {
 		return err
 	}
-	if err := os.WriteFile(globalConfigFile, []byte(content), 0600); err != nil {
+	if err := os.WriteFile(globalConfigFile, []byte(content), 0o600); err != nil {
 		return fmt.Errorf("writing config: %w", err)
 	}
 	success("Created %s", fileRef(globalConfigFile))
