@@ -51,18 +51,17 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Extract release notes
+      - name: Install chlog and extract release notes
         run: |
+          go install gitlab.com/ariel-frischer/chlog/cmd/chlog@latest
           VERSION="${GITHUB_REF#refs/tags/v}"
-          echo "Extracting notes for version: $VERSION"
+          echo "Extracting changelog for version: $VERSION"
           mkdir -p .release
-          # Use chlog if available, otherwise fall back to tag message
-          if command -v chlog >/dev/null 2>&1; then
-            chlog extract "$VERSION" > .release/notes.md || true
-          fi
+          chlog extract "$VERSION" > .release/notes.md || true
           if [ ! -s .release/notes.md ]; then
-            echo "Release $VERSION" > .release/notes.md
+            echo "No changelog entry for this version." > .release/notes.md
           fi
+          echo "Release notes:"
           cat .release/notes.md
 
       - name: Run GoReleaser
@@ -70,6 +69,18 @@ jobs:
         with:
           version: "~> v2"
           args: release --clean --release-notes=.release/notes.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Ensure release notes are set
+        run: |
+          BODY=$(gh release view "${{ github.ref_name }}" --json body -q .body)
+          if [ -z "$BODY" ]; then
+            echo "Release body empty, patching with notes..."
+            gh release edit "${{ github.ref_name }}" --notes-file .release/notes.md
+          else
+            echo "Release body already set."
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

@@ -1,7 +1,9 @@
 project: rentalot-cli
 versions:
-    unreleased:
+    0.1.0:
+        date: 2026-03-25
         added:
+            - version info from debug.ReadBuildInfo for go install users
             - contacts command group — list, get, create, update, delete subcommands
             - golangci-lint configuration with gocritic, misspell, and style checks
             - govulncheck vulnerability scanning in CI pipeline
@@ -22,6 +24,9 @@ versions:
             - config management — load api_key + base_url from ~/.config/rentalot-cli/config.yaml with env var overrides
             - API client package — thin HTTP wrapper with Bearer auth, base URL config, and RFC 9457 error decoding
             - '"config" command group — init, show, set, edit subcommands for managing global config'
+        fixed:
+            - CI lint failure — upgrade golangci-lint-action to v7 for golangci-lint v2 support
+            - CI govulncheck failure — bump Go to 1.25.8 to resolve stdlib vulnerabilities
         internal:
             changed:
                 - migrate repository ownership from ariel-frischer to Rentalot-ai GitHub org
