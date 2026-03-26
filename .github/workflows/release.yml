@@ -53,7 +53,7 @@ jobs:
 
       - name: Install chlog and extract release notes
         run: |
-          go install gitlab.com/ariel-frischer/chlog/cmd/chlog@latest
+          go install github.com/ariel-frischer/chlog/cmd/chlog@latest
           VERSION="${GITHUB_REF#refs/tags/v}"
           echo "Extracting changelog for version: $VERSION"
           mkdir -p .release
