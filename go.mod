@@ -1,6 +1,6 @@
 module github.com/Rentalot-ai/rentalot-cli
 
-go 1.25.5
+go 1.25.8
 
 require (
 	github.com/fatih/color v1.18.0
