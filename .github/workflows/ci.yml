@@ -28,7 +28,7 @@ jobs:
           git diff --exit-code go.mod go.sum || (echo "go.mod/go.sum not tidy" && exit 1)
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
           version: v2.11.4
 
