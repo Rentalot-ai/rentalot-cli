@@ -1,7 +1,8 @@
 ---
 name: rentalot-cli
 description: >
-  CLI tool for managing Rentalot rental properties, contacts, and workflows
+  CLI tool and Go library for the Rentalot v1 REST API — manage rental properties, contacts, showings, workflows, and more.
+  Includes full API reference, schemas, bulk import, and product documentation.
 license: MIT
 compatibility:
   - Claude Code
@@ -11,14 +12,27 @@ compatibility:
   - VS Code
 metadata:
   author: Ariel Frischer
-  version: 0.0.1
-  tags: go, cli, library, rentalot, rental
+  version: 0.1.0
+  tags: go, cli, library, rentalot, rental, api
 allowed-tools: Bash Read Write Edit
 ---
 
 # rentalot-cli
 
-Go CLI for the Rentalot v1 REST API — manage rental properties, contacts, showings, workflows, and more.
+Go CLI and library for the Rentalot v1 REST API — manage rental properties, contacts, showings, conversations, workflows, webhooks, sessions, settings, and more.
+
+> **Reference files** — this skill uses a references pattern. The main SKILL.md covers CLI usage, architecture, and development. Domain knowledge and schemas are in separate files — read them on-demand when you need the detail:
+>
+> - [api-schemas.md](api-schemas.md) — All OpenAPI component schemas: field types, enums, required fields. Read when writing Go structs, validation, or tests.
+> - [product-docs.md](product-docs.md) — How Rentalot works: properties, photos, showings, workflows (step types, templates), agent behavior, slash commands, settings, FAQ. Read for domain context.
+> - [bulk-import.md](bulk-import.md) — Bulk property import: CSV/Excel/JSON column schema, value coercion rules, auto-detected PMS exports (AppFolio, Buildium, Zillow, etc.), API bulk endpoint.
+>
+> **Note:** The CLI code in `pkg/rentalotcli/` is the authoritative API reference — it implements all endpoints. Don't duplicate endpoint docs; read the Go source instead.
+>
+> **Live docs** (crawl for latest): https://rentalot.ai/llms.txt — index of all doc pages.
+> - Product docs: `https://rentalot.ai/docs/{page}`
+> - API reference: `https://rentalot.ai/docs/api-reference/{resource}`
+> - OpenAPI spec: `https://rentalot.ai/api/v1/openapi.json`
 
 ## Config
 
@@ -96,7 +110,7 @@ rentalot-cli settings followups update
 ## Development
 
 ```bash
-make build          # Build binary → bin/rentalot-cli
+make build          # Build binary -> bin/rentalot-cli
 make test           # Run tests
 make lint           # Run golangci-lint (falls back to go vet)
 make format         # go fmt ./...
@@ -111,9 +125,9 @@ make sync-schema    # Pull OpenAPI spec from running rentalot dev server
 ## Architecture
 
 ```
-cmd/rentalot-cli/        # main.go — cobra root, registers subcommands
+cmd/rentalot-cli/        # main.go -- cobra root, registers subcommands
 internal/version/        # Version info (injected via ldflags at build time)
-internal/api/            # openapi.json — synced from rentalot repo
+internal/api/            # openapi.json -- synced from rentalot repo
 pkg/rentalotcli/         # Public library
   client.go              # HTTP client (Bearer auth, base URL, error unwrap)
   config.go              # Config loading from env
@@ -151,7 +165,7 @@ bd list                               # All open issues
 cd ../rentalot && make dev
 
 # 2. Pull latest OpenAPI spec
-make sync-schema   # → internal/api/openapi.json
+make sync-schema   # -> internal/api/openapi.json
 ```
 
 When the rentalot API adds new routes, run `make sync-schema` then implement matching CLI commands.
@@ -159,5 +173,5 @@ Reference `../rentalot-mcp/src/tools/*.ts` for endpoint params and response shap
 
 ## Related Repos
 
-- `../rentalot/` — main Next.js app + API server (`make dev` → http://localhost:3000)
+- `../rentalot/` — main Next.js app + API server (`make dev` -> http://localhost:3000)
 - `../rentalot-mcp/` — MCP server for same API (37 tools, TypeScript) — reference for endpoint params/shapes
