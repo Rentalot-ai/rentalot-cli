@@ -727,20 +727,21 @@ func TestWebhooksTestCmd_TableOutput(t *testing.T) {
 func TestBulkImportRun_Success(t *testing.T) {
 	dir := t.TempDir()
 	csvPath := dir + "/import.csv"
-	if err := os.WriteFile(csvPath, []byte("name,email\nAlice,a@t.com\n"), 0o644); err != nil {
+	if err := os.WriteFile(csvPath, []byte("address,rent\n123 Main St,1500\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		if r.Method == http.MethodPost && r.URL.Path == "/api/v1/bulk-import" {
-			_ = json.NewEncoder(w).Encode(map[string]any{"id": "job-1", "status": "completed"})
+		if r.Method == http.MethodPost && r.URL.Path == "/api/v1/properties/bulk" {
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{"jobId": "job-1", "status": "pending", "total": 1},
+			})
 			return
 		}
-		// Poll endpoint — return completed immediately.
-		if r.Method == http.MethodGet && r.URL.Path == "/api/v1/bulk-import/job-1" {
+		if r.Method == http.MethodGet && r.URL.Path == "/api/v1/properties/bulk/job-1" {
 			_ = json.NewEncoder(w).Encode(map[string]any{
-				"id": "job-1", "status": "completed", "total": 1, "imported": 1, "failed": 0,
+				"data": map[string]any{"jobId": "job-1", "status": "completed", "total": 1, "created": 1, "failed": 0},
 			})
 			return
 		}
@@ -749,10 +750,9 @@ func TestBulkImportRun_Success(t *testing.T) {
 
 	cmd := &cobra.Command{Use: "bulk-import", RunE: bulkImportRun}
 	cmd.Flags().String("file", csvPath, "")
-	cmd.Flags().String("type", "contacts", "")
 	cmd.Flags().Bool("poll", true, "")
 
-	_, err := executeCommand(t, handler, cmd, "--file", csvPath, "--type", "contacts")
+	_, err := executeCommand(t, handler, cmd, "--file", csvPath)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -761,16 +761,15 @@ func TestBulkImportRun_Success(t *testing.T) {
 func TestBulkImportRun_NoPoll(t *testing.T) {
 	dir := t.TempDir()
 	csvPath := dir + "/import.csv"
-	if err := os.WriteFile(csvPath, []byte("name,email\nAlice,a@t.com\n"), 0o644); err != nil {
+	if err := os.WriteFile(csvPath, []byte("address,rent\nAlice St,1500\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
-	handler := jsonHandler(t, http.MethodPost, "/api/v1/bulk-import", http.StatusOK,
-		map[string]any{"id": "job-1", "status": "pending"})
+	handler := jsonHandler(t, http.MethodPost, "/api/v1/properties/bulk", http.StatusAccepted,
+		map[string]any{"data": map[string]any{"jobId": "job-1", "status": "pending", "total": 1}})
 
 	cmd := &cobra.Command{Use: "bulk-import", RunE: bulkImportRun}
 	cmd.Flags().String("file", csvPath, "")
-	cmd.Flags().String("type", "contacts", "")
 	cmd.Flags().Bool("poll", false, "")
 
 	_, err := executeCommand(t, handler, cmd, "--file", csvPath, "--poll=false")
@@ -782,7 +781,7 @@ func TestBulkImportRun_NoPoll(t *testing.T) {
 func TestBulkImportRun_EmptyFile(t *testing.T) {
 	dir := t.TempDir()
 	csvPath := dir + "/empty.csv"
-	if err := os.WriteFile(csvPath, []byte("name,email\n"), 0o644); err != nil {
+	if err := os.WriteFile(csvPath, []byte("address,rent\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -790,7 +789,6 @@ func TestBulkImportRun_EmptyFile(t *testing.T) {
 
 	cmd := &cobra.Command{Use: "bulk-import", RunE: bulkImportRun}
 	cmd.Flags().String("file", csvPath, "")
-	cmd.Flags().String("type", "contacts", "")
 	cmd.Flags().Bool("poll", true, "")
 
 	_, err := executeCommand(t, handler, cmd, "--file", csvPath)
@@ -802,16 +800,15 @@ func TestBulkImportRun_EmptyFile(t *testing.T) {
 func TestBulkImportRun_APIError(t *testing.T) {
 	dir := t.TempDir()
 	csvPath := dir + "/import.csv"
-	if err := os.WriteFile(csvPath, []byte("name\nAlice\n"), 0o644); err != nil {
+	if err := os.WriteFile(csvPath, []byte("address\n123 Main\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
-	handler := jsonHandler(t, http.MethodPost, "/api/v1/bulk-import", http.StatusBadRequest,
+	handler := jsonHandler(t, http.MethodPost, "/api/v1/properties/bulk", http.StatusBadRequest,
 		map[string]any{"error": map[string]any{"code": "invalid", "message": "bad request"}})
 
 	cmd := &cobra.Command{Use: "bulk-import", RunE: bulkImportRun}
 	cmd.Flags().String("file", csvPath, "")
-	cmd.Flags().String("type", "contacts", "")
 	cmd.Flags().Bool("poll", true, "")
 
 	_, err := executeCommand(t, handler, cmd, "--file", csvPath)
@@ -824,7 +821,10 @@ func TestPollJobStatus_Failed(t *testing.T) {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{
-			"id": "job-1", "status": "failed", "error": "server error",
+			"data": map[string]any{
+				"jobId": "job-1", "status": "failed",
+				"errors": []map[string]any{{"row": 1, "message": "server error"}},
+			},
 		})
 	}
 
@@ -849,7 +849,9 @@ func TestPollJobStatus_Completed(t *testing.T) {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{
-			"id": "job-1", "status": "completed", "imported": 5, "failed": 0,
+			"data": map[string]any{
+				"jobId": "job-1", "status": "completed", "total": 5, "created": 5, "failed": 0,
+			},
 		})
 	}
 

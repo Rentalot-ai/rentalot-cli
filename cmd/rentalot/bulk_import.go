@@ -13,26 +13,28 @@ import (
 
 var bulkImportCmd = &cobra.Command{
 	Use:   "bulk-import",
-	Short: "Import properties or contacts from a CSV/JSON file",
-	Long: `Import records from a local CSV or JSON file.
+	Short: "Import properties from a CSV/JSON file",
+	Long: `Import properties from a local CSV or JSON file.
+
+Field names are flexible — Zillow, AppFolio, and other common aliases
+are auto-normalized server-side.
 
 Examples:
-  rentalot-cli bulk-import --file properties.csv --type properties
-  rentalot-cli bulk-import --file contacts.json --type contacts`,
+  rentalot-cli bulk-import --file properties.csv
+  rentalot-cli bulk-import --file properties.json
+  rentalot-cli bulk-import --file properties.csv --poll=false`,
 	RunE: bulkImportRun,
 }
 
 func init() {
 	rootCmd.AddCommand(bulkImportCmd)
 	bulkImportCmd.Flags().String("file", "", "path to CSV or JSON file (required)")
-	bulkImportCmd.Flags().String("type", "properties", "record type: properties or contacts")
 	bulkImportCmd.Flags().Bool("poll", true, "poll job status until complete")
 	_ = bulkImportCmd.MarkFlagRequired("file")
 }
 
 func bulkImportRun(cmd *cobra.Command, args []string) error {
 	filePath, _ := cmd.Flags().GetString("file")
-	recordType, _ := cmd.Flags().GetString("type")
 	poll, _ := cmd.Flags().GetBool("poll")
 
 	records, err := loadImportFile(filePath)
@@ -44,12 +46,11 @@ func bulkImportRun(cmd *cobra.Command, args []string) error {
 	}
 
 	body := map[string]any{
-		"type":    recordType,
-		"records": records,
+		"properties": records,
 	}
 
 	client := clientFromContext(cmd)
-	resp, err := client.Post(cmd.Context(), "/api/v1/bulk-import", body)
+	resp, err := client.Post(cmd.Context(), "/api/v1/properties/bulk", body)
 	if err != nil {
 		return fmt.Errorf("submitting import: %w", err)
 	}
@@ -58,52 +59,66 @@ func bulkImportRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("submitting import: %w", decodeAPIError(resp))
 	}
 
-	var job struct {
-		ID     string `json:"id"`
-		Status string `json:"status"`
+	var envelope struct {
+		Data struct {
+			JobID  string `json:"jobId"`
+			Status string `json:"status"`
+			Total  int    `json:"total"`
+		} `json:"data"`
 	}
-	if err := decodeBody(resp.Body, &job); err != nil {
+	if err := decodeBody(resp.Body, &envelope); err != nil {
 		return err
 	}
 
-	success("Import job %s submitted (%d records).", highlight(job.ID), len(records))
+	success("Import job %s submitted (%d properties).", highlight(envelope.Data.JobID), envelope.Data.Total)
 
-	if !poll || job.ID == "" {
+	if !poll || envelope.Data.JobID == "" {
 		return nil
 	}
 
-	return pollJobStatus(cmd, job.ID)
+	return pollJobStatus(cmd, envelope.Data.JobID)
 }
 
 func pollJobStatus(cmd *cobra.Command, jobID string) error {
 	client := clientFromContext(cmd)
 	for {
-		resp, err := client.Get(cmd.Context(), "/api/v1/bulk-import/"+jobID, nil)
+		resp, err := client.Get(cmd.Context(), "/api/v1/properties/bulk/"+jobID, nil)
 		if err != nil {
 			return fmt.Errorf("polling job status: %w", err)
 		}
-		var job struct {
-			ID       string `json:"id"`
-			Status   string `json:"status"`
-			Total    int    `json:"total"`
-			Imported int    `json:"imported"`
-			Failed   int    `json:"failed"`
-			Error    string `json:"error"`
+		var envelope struct {
+			Data struct {
+				JobID   string `json:"jobId"`
+				Status  string `json:"status"`
+				Total   int    `json:"total"`
+				Created int    `json:"created"`
+				Failed  int    `json:"failed"`
+				Errors  []struct {
+					Row     int    `json:"row"`
+					Field   string `json:"field"`
+					Message string `json:"message"`
+				} `json:"errors"`
+			} `json:"data"`
 		}
-		if err := decodeBody(resp.Body, &job); err != nil {
+		if err := decodeBody(resp.Body, &envelope); err != nil {
 			_ = resp.Body.Close()
 			return err
 		}
 		_ = resp.Body.Close()
 
+		job := envelope.Data
 		switch job.Status {
 		case "completed":
-			success("Import complete: %d imported, %d failed.", job.Imported, job.Failed)
+			success("Import complete: %d created, %d failed.", job.Created, job.Failed)
 			return nil
 		case "failed":
-			return fmt.Errorf("import job failed: %s", job.Error)
+			msg := "import job failed"
+			if len(job.Errors) > 0 {
+				msg = fmt.Sprintf("import job failed: %s", job.Errors[0].Message)
+			}
+			return fmt.Errorf("%s", msg)
 		default:
-			fmt.Printf("  status: %s (%d/%d)\n", job.Status, job.Imported, job.Total)
+			fmt.Printf("  status: %s (%d/%d)\n", job.Status, job.Created, job.Total)
 			time.Sleep(2 * time.Second)
 		}
 	}

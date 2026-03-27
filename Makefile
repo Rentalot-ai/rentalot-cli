@@ -88,6 +88,7 @@ release: ## Create a release tag and push (usage: make release VERSION=v1.0.0)
 	fi
 	git tag -a $(VERSION) -m "Release $(VERSION)"
 	git push origin $(VERSION)
+	git push gh $(VERSION)
 
 patch: ## Bump patch version and release
 	$(eval CURRENT=$(shell git tag --sort=-v:refname | head -1 | sed 's/^v//'))
