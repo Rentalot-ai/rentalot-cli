@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - bulk-import: removed --type flag (v1 API only supports property import)
+- Rename publicChatEnabled to prescreeningEnabled in API schema docs
 
 ## [0.1.0] - 2026-03-25
 

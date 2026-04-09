@@ -450,7 +450,7 @@ Optional: `reviewNotes` (max 2000 chars)
 | defaultShowingDuration | number | 30, 45, or 60 minutes |
 | emailSignOff | string | Email signature |
 | publicChatIntro | string | Public chat welcome |
-| publicChatEnabled | boolean | |
+| prescreeningEnabled | boolean | |
 | profilePublic | boolean | |
 | licenseNumber | string | RE license |
 | publicPhone | string | Public phone |

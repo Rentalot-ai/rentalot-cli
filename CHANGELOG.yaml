@@ -2,9 +2,10 @@ project: rentalot-cli
 versions:
     unreleased:
         fixed:
-            - 'bulk-import command now hits correct API endpoints (POST /api/v1/properties/bulk) and parses envelope response'
+            - bulk-import command now hits correct API endpoints (POST /api/v1/properties/bulk) and parses envelope response
         changed:
             - 'bulk-import: removed --type flag (v1 API only supports property import)'
+            - Rename publicChatEnabled to prescreeningEnabled in API schema docs
         internal:
             changed:
                 - Add comprehensive skill reference docs (API schemas, product docs, bulk import)
