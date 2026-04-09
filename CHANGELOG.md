@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - bulk-import command now hits correct API endpoints (POST /api/v1/properties/bulk) and parses envelope response
+- Bump Go to 1.25.9 to resolve stdlib vulnerabilities (GO-2026-4947, GO-2026-4946, GO-2026-4870)
 
 ### Changed
 
