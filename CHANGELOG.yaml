@@ -1,6 +1,8 @@
 project: rentalot-cli
 versions:
-    unreleased:
+    unreleased: {}
+    0.1.3:
+        date: 2026-04-08
         fixed:
             - bulk-import command now hits correct API endpoints (POST /api/v1/properties/bulk) and parses envelope response
         changed:

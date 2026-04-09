@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-04-08
+
 ### Fixed
 
 - bulk-import command now hits correct API endpoints (POST /api/v1/properties/bulk) and parses envelope response
@@ -52,5 +54,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial project scaffolding
 
-[Unreleased]: https://github.com/Rentalot-ai/rentalot-cli/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Rentalot-ai/rentalot-cli/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/Rentalot-ai/rentalot-cli/compare/v0.1.0...v0.1.3
 [0.1.0]: https://github.com/Rentalot-ai/rentalot-cli/compare/v0.0.1...v0.1.0
