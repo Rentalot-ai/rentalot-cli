@@ -9,7 +9,7 @@ bd ready              # Find available work
 bd show <id>          # View issue details
 bd update <id> --claim  # Claim work atomically
 bd close <id>         # Complete work
-bd sync               # Sync with git
+bd vc status          # Check Beads Dolt state
 ```
 
 ## Non-Interactive Shell Commands
@@ -101,13 +101,16 @@ bd close bd-42 --reason "Completed" --json
    - `bd create "Found bug" --description="Details about what was found" -p 1 --deps discovered-from:<parent-id>`
 5. **Complete**: `bd close <id> --reason "Done"`
 
-### Auto-Sync
+### Beads Persistence
 
-bd automatically syncs with git:
+Current installed bd is `0.59.x`; the old top-level Beads sync command is no longer available
+(the upstream v0.59.0 changelog removed stale sync-mode docs). Use the current
+Dolt-backed commands when explicit persistence is needed:
 
-- Exports to `.beads/issues.jsonl` after changes (5s debounce)
-- Imports from JSONL when newer (e.g., after `git pull`)
-- No manual export/import needed!
+- `bd vc status --json` to inspect Beads branch/commit state
+- `bd dolt commit` if pending Beads Dolt changes need an explicit commit
+- `bd dolt push` / `bd dolt pull` only when working with a configured Dolt remote
+- Do not run the removed top-level sync command; it is stale documentation for this CLI version.
 
 ### Important Rules
 
@@ -133,7 +136,7 @@ For more details, see README.md and docs/QUICKSTART.md.
 4. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
-   bd sync
+   bd vc status --json
    git push
    git status  # MUST show "up to date with origin"
    ```
