@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
@@ -333,6 +334,122 @@ func TestContactsListCmd_WithPagination(t *testing.T) {
 func TestPropertiesListCmd(t *testing.T) {
 	data := map[string]any{"data": []any{map[string]any{"id": "p1", "title": "Apt A", "monthlyRent": 1500}}}
 	_, err := executeCommand(t, jsonHandler(t, http.MethodGet, "/api/v1/properties", http.StatusOK, data), propertiesListCmd())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestPropertiesListCmd_EncodesRepeatedPropertyTypesAndGenericFilters(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		if got, want := query["propertyType"], []string{"apartment", "condo"}; !slices.Equal(got, want) {
+			t.Errorf("propertyType = %#v, want %#v", got, want)
+		}
+		if _, ok := query["propertyTypes"]; ok {
+			t.Error("query must use singular propertyType, not propertyTypes")
+		}
+		if got := query.Get("status"); got != "active" {
+			t.Errorf("status = %q, want active", got)
+		}
+		if got := query.Get("limit"); got != "20" {
+			t.Errorf("limit = %q, want 20", got)
+		}
+		if got := query.Get("page"); got != "2" {
+			t.Errorf("page = %q, want 2", got)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": []any{}})
+	}
+
+	_, err := executeCommand(t, handler, propertiesListCmd(),
+		"--property-type", "apartment", "--property-type", "condo",
+		"--limit", "20", "--page", "2", "--filter", "status=active")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestPropertiesListCmd_EncodesExactStudioFilter(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		if got := query.Get("bedroomType"); got != "studio" {
+			t.Errorf("bedroomType = %q, want studio", got)
+		}
+		if len(query["bedroomType"]) != 1 {
+			t.Errorf("bedroomType values = %#v, want one value", query["bedroomType"])
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": []any{}})
+	}
+
+	_, err := executeCommand(t, handler, propertiesListCmd(), "--bedroom-type", "studio")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestPropertiesListCmd_RejectsUnsupportedFilterValuesBeforeRequest(t *testing.T) {
+	tests := map[string]struct {
+		args []string
+		want string
+	}{
+		"property type": {
+			args: []string{"--property-type", "villa"},
+			want: "invalid property type",
+		},
+		"bedroom type": {
+			args: []string{"--bedroom-type", "one-bedroom"},
+			want: "bedroom type must be studio",
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			hit := false
+			handler := func(w http.ResponseWriter, _ *http.Request) {
+				hit = true
+				w.WriteHeader(http.StatusOK)
+			}
+			_, err := executeCommand(t, handler, propertiesListCmd(), tc.args...)
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("error = %v, want %q", err, tc.want)
+			}
+			if hit {
+				t.Fatal("invalid filter should be rejected before contacting the API")
+			}
+		})
+	}
+}
+
+func TestPropertiesListCmd_PreservesNullablePropertyTypeOutput(t *testing.T) {
+	data := map[string]any{"data": []any{map[string]any{
+		"id": "p1", "title": "Legacy Studio", "address": "123 Main St",
+		"propertyType": nil, "status": "active", "monthlyRent": 1500,
+	}}}
+
+	output, err := executeCommandTable(t, jsonHandler(t, http.MethodGet, "/api/v1/properties", http.StatusOK, data), propertiesListCmd())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(output, "Legacy Studio") {
+		t.Fatalf("output missing legacy property title: %s", output)
+	}
+	for _, propertyType := range []string{"house", "apartment", "condo", "townhouse", "room"} {
+		if strings.Contains(output, propertyType) {
+			t.Errorf("nullable property type was classified as %q: %s", propertyType, output)
+		}
+	}
+}
+
+func TestPropertiesListCmd_OmitsEmptyGenericFilterValue(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := r.URL.Query()["status"]; ok {
+			t.Error("empty generic filter value must not be sent")
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": []any{}})
+	}
+
+	_, err := executeCommand(t, handler, propertiesListCmd(), "--filter", "status=")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

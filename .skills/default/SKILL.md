@@ -53,7 +53,7 @@ rentalot-cli version                       # Show version/build info
 rentalot-cli completion bash               # Shell completion: bash|zsh|fish|powershell
 
 # Properties
-rentalot-cli properties list               # --status --min-rent --max-rent --city --limit --page
+rentalot-cli properties list               # --property-type (repeatable) --bedroom-type studio --filter --limit --page
 rentalot-cli properties get <id>
 rentalot-cli properties create              # --address --monthly-rent --bedrooms --bathrooms
 rentalot-cli properties update <id>         # --title --monthly-rent --property-type, etc.
@@ -115,6 +115,8 @@ rentalot-cli settings followups update
 
 Property writes use `title`, `address`, `monthlyRent`, `bedrooms`, `bathrooms`, and optional `propertyType`, `status`, and `isPublic`. `--name`, `--type`, and `--rent` remain deprecated flag aliases for older scripts, but the CLI translates them to property `title`, `propertyType`, and `monthlyRent`; those legacy property JSON keys are never sent. Contact `name` remains canonical, while contact `--type` is translated to `role`. Property types are `house`, `apartment`, `condo`, `townhouse`, and `room`. A studio is `--bedrooms 0`, not a property type. For the development-only trial first job, omit `propertyType` because it is separately feature-gated and keep `isPublic` false.
 
+Property list filters use repeatable `--property-type` flags, which encode repeated singular `propertyType` query parameters. Use `--bedroom-type studio` for the exact v1 Studio filter, encoded as `bedroomType=studio`; Studio means `bedrooms=0`. The generic `--filter key=value` flag can be combined with these filters.
+
 Contact writes use `role`, not `type`. A single contact create requires `--name` and at least one of `--email` or `--phone`; empty optional values are omitted. The role values are `prospect`, `tenant`, `landlord`, `property_manager`, `vendor`, and `other`.
 
 ```bash
@@ -124,6 +126,9 @@ rentalot properties create \
   --is-public=false
 rentalot contacts create \
   --name "Ada Lovelace" --email ada@example.com --role tenant
+rentalot properties list \
+  --property-type apartment --property-type condo
+rentalot properties list --bedroom-type studio --filter status=active
 ```
 
 Use `--json` for the canonical response envelope. The CLI does not create accounts or API keys. After a key expires or is revoked, issue or configure an appropriate active key at the same server origin. A `429` with `Retry-After` is a timed server instruction, but the CLI does not retry automatically because failed attempts consume quota. A `429` without a timed retry can indicate trial lifetime exhaustion; upgrade to continue rather than rotating keys.

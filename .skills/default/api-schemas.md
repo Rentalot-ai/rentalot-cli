@@ -61,6 +61,17 @@ The general v1 schema accepts canonical `propertyType` values when the server-si
 
 Same canonical fields as `CreatePropertyRequest`, all optional. Send only fields to change. Use `title`, `propertyType`, and `monthlyRent`, never legacy `name`, `type`, or `rent` JSON keys.
 
+## Property list filters
+
+The v1 property list endpoint accepts these relevant query filters:
+
+| Query parameter | Type | Description |
+|-----------------|------|-------------|
+| `propertyType` | repeated string | One or more canonical values: `house`, `apartment`, `condo`, `townhouse`, or `room`. Send repeated singular keys, such as `propertyType=apartment&propertyType=condo`. |
+| `bedroomType` | string | The only supported value is `studio`, which matches properties where `bedrooms=0`. |
+
+The CLI exposes these as repeatable `--property-type` and `--bedroom-type studio` flags on `properties list`. Existing legacy records may still return a null `propertyType`; do not infer a type from the bedroom count.
+
 ---
 
 ## Contact
