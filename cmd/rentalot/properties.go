@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -24,13 +25,17 @@ func init() {
 }
 
 func propertiesListCmd() *cobra.Command {
-	var f listFlags
+	var f propertyListFlags
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List properties",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := clientFromContext(cmd)
-			resp, err := client.Get(cmd.Context(), "/api/v1/properties", f.toQueryParams())
+			path, err := f.requestPath()
+			if err != nil {
+				return err
+			}
+			resp, err := client.Get(cmd.Context(), path, nil)
 			if err != nil {
 				return fmt.Errorf("listing properties: %w", err)
 			}
@@ -60,8 +65,49 @@ func propertiesListCmd() *cobra.Command {
 			return nil
 		},
 	}
-	addListFlags(cmd, &f)
+	addPropertyListFlags(cmd, &f)
 	return cmd
+}
+
+type propertyListFlags struct {
+	listFlags
+	propertyTypes []string
+	bedroomType   string
+}
+
+func addPropertyListFlags(cmd *cobra.Command, f *propertyListFlags) {
+	addListFlags(cmd, &f.listFlags)
+	flags := cmd.Flags()
+	flags.StringArrayVar(&f.propertyTypes, "property-type", nil, "filter by canonical property type (repeat for multiple)")
+	flags.StringVar(&f.bedroomType, "bedroom-type", "", "filter by bedroom type (only studio; studios have zero bedrooms)")
+}
+
+func (f *propertyListFlags) requestPath() (string, error) {
+	params := url.Values{}
+	for key, value := range f.toQueryParams() {
+		if value == "" {
+			continue
+		}
+		params.Set(key, value)
+	}
+	for _, propertyType := range f.propertyTypes {
+		propertyType = strings.TrimSpace(propertyType)
+		if err := validatePropertyEnums(propertyType, true, "", false); err != nil {
+			return "", err
+		}
+		params.Add("propertyType", propertyType)
+	}
+	if f.bedroomType != "" {
+		bedroomType := strings.TrimSpace(f.bedroomType)
+		if bedroomType != "studio" {
+			return "", fmt.Errorf("bedroom type must be studio")
+		}
+		params.Set("bedroomType", bedroomType)
+	}
+	if len(params) == 0 {
+		return "/api/v1/properties", nil
+	}
+	return "/api/v1/properties?" + params.Encode(), nil
 }
 
 func propertiesGetCmd() *cobra.Command {

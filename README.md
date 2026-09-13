@@ -63,6 +63,15 @@ rentalot contacts create --name "Ada Lovelace" --email ada@example.com --role te
 rentalot contacts update "$CONTACT_ID" --role tenant
 ```
 
+Property lists support repeated canonical type filters and the exact Studio filter from the v1 API:
+
+```bash
+rentalot properties list --property-type apartment --property-type condo
+rentalot properties list --bedroom-type studio --filter status=active
+```
+
+The repeated `--property-type` flags become repeated `propertyType` query parameters. `--bedroom-type studio` becomes `bedroomType=studio`; Studio means `bedrooms=0`, not a property type. The generic `--filter key=value` flag remains available alongside these property-specific filters.
+
 Older `--name`, `--type`, and `--rent` property flags, plus contact `--type`, are deprecated aliases. They are translated to canonical JSON keys: property `name` becomes `title`, property `type` becomes `propertyType`, property `rent` becomes `monthlyRent`, and contact `type` becomes `role`. Contact `name` remains a canonical field. Contact creation requires a name and at least one of email or phone.
 
 Use `--json` to preserve the API response envelope. A `401` means the key is missing, expired, or revoked, so configure an active key at the same origin. A `429` with `Retry-After` is a timed server instruction; the CLI reports it and does not retry automatically because attempts consume quota. A trial lifetime exhaustion response has no timed retry; upgrade to continue, and do not rotate keys to bypass account-wide limits.

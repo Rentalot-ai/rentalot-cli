@@ -142,6 +142,16 @@ func TestBinary_CanonicalWriteHelp(t *testing.T) {
 	if strings.Contains(contactHelp, "--type") {
 		t.Errorf("deprecated contact flag --type should stay hidden from help: %s", contactHelp)
 	}
+
+	propertyListHelp, _, err := runBinary(t, nil, "properties", "list", "--help")
+	if err != nil {
+		t.Fatalf("properties list help exit error: %v", err)
+	}
+	for _, want := range []string{"--property-type", "--bedroom-type", "studios have zero bedrooms"} {
+		if !strings.Contains(propertyListHelp, want) {
+			t.Errorf("property list help missing %q: %s", want, propertyListHelp)
+		}
+	}
 }
 
 func TestBinary_UnknownCommand(t *testing.T) {
@@ -374,6 +384,38 @@ func TestBinary_PropertiesList_TableOutput(t *testing.T) {
 		if !strings.Contains(stdout, want) {
 			t.Errorf("expected %q in table output, got: %s", want, stdout)
 		}
+	}
+}
+
+func TestBinary_PropertiesList_Filters(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/properties", func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		if got, want := query["propertyType"], []string{"apartment", "condo"}; len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+			t.Errorf("propertyType = %#v, want %#v", got, want)
+		}
+		if _, ok := query["propertyTypes"]; ok {
+			t.Error("query must use singular propertyType, not propertyTypes")
+		}
+		if got := query.Get("bedroomType"); got != "studio" {
+			t.Errorf("bedroomType = %q, want studio", got)
+		}
+		if got := query.Get("status"); got != "active" {
+			t.Errorf("status = %q, want active", got)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": []any{}})
+	})
+
+	srv := mockAPI(t, mux)
+	stdout, _, err := runBinary(t, envForMock(srv), "properties", "list",
+		"--property-type", "apartment", "--property-type", "condo",
+		"--bedroom-type", "studio", "--filter", "status=active")
+	if err != nil {
+		t.Fatalf("exit error: %v", err)
+	}
+	if !strings.Contains(stdout, "PROPERTY TYPE") {
+		t.Errorf("expected table output, got: %s", stdout)
 	}
 }
 

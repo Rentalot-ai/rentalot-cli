@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - Canonicalize property and contact CLI payloads and add trial quota recovery guidance
+- Add repeated propertyType and exact Studio filters to properties list
 
 ## [0.1.3] - 2026-04-08
 

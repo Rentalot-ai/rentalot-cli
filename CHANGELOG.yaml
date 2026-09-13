@@ -3,6 +3,7 @@ versions:
     unreleased:
         changed:
             - Canonicalize property and contact CLI payloads and add trial quota recovery guidance
+            - Add repeated propertyType and exact Studio filters to properties list
     0.1.3:
         date: 2026-04-08
         fixed:
