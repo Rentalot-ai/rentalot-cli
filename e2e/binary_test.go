@@ -104,6 +104,46 @@ func TestBinary_HelpFlag(t *testing.T) {
 	}
 }
 
+func TestBinary_CanonicalWriteHelp(t *testing.T) {
+	propertyHelp, _, err := runBinary(t, nil, "properties", "create", "--help")
+	if err != nil {
+		t.Fatalf("properties help exit error: %v", err)
+	}
+	for _, want := range []string{"--address", "--monthly-rent", "--bedrooms", "--bathrooms", "--property-type"} {
+		if !strings.Contains(propertyHelp, want) {
+			t.Errorf("property help missing %q: %s", want, propertyHelp)
+		}
+	}
+	for _, want := range []string{"Trial writes must remain private", "omit --property-type"} {
+		if !strings.Contains(propertyHelp, want) {
+			t.Errorf("property help missing trial guidance %q: %s", want, propertyHelp)
+		}
+	}
+	for _, legacy := range []string{"--name", "--type", "--rent"} {
+		if strings.Contains(propertyHelp, legacy) {
+			t.Errorf("deprecated property flag %q should stay hidden from help: %s", legacy, propertyHelp)
+		}
+	}
+
+	contactHelp, _, err := runBinary(t, nil, "contacts", "create", "--help")
+	if err != nil {
+		t.Fatalf("contacts help exit error: %v", err)
+	}
+	for _, want := range []string{"--name", "--email", "--phone", "--role"} {
+		if !strings.Contains(contactHelp, want) {
+			t.Errorf("contact help missing %q: %s", want, contactHelp)
+		}
+	}
+	for _, want := range []string{"at least one of --email or --phone"} {
+		if !strings.Contains(contactHelp, want) {
+			t.Errorf("contact help missing create guidance %q: %s", want, contactHelp)
+		}
+	}
+	if strings.Contains(contactHelp, "--type") {
+		t.Errorf("deprecated contact flag --type should stay hidden from help: %s", contactHelp)
+	}
+}
+
 func TestBinary_UnknownCommand(t *testing.T) {
 	_, stderr, err := runBinary(t, nil, "nonexistent")
 	if err == nil {
@@ -127,8 +167,8 @@ func TestBinary_ContactsList(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{
 			"data": []any{
-				map[string]any{"id": "c1", "name": "Alice", "email": "alice@test.com", "phone": "555-0001", "type": "tenant"},
-				map[string]any{"id": "c2", "name": "Bob", "email": "bob@test.com", "phone": "555-0002", "type": "owner"},
+				map[string]any{"id": "c1", "name": "Alice", "email": "alice@test.com", "phone": "555-0001", "role": "tenant"},
+				map[string]any{"id": "c2", "name": "Bob", "email": "bob@test.com", "phone": "555-0002", "role": "landlord"},
 			},
 		})
 	})
@@ -149,7 +189,7 @@ func TestBinary_ContactsList_TableOutput(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{
 			"data": []any{
-				map[string]any{"id": "c1", "name": "Alice", "email": "alice@test.com", "phone": "555-0001", "type": "tenant"},
+				map[string]any{"id": "c1", "name": "Alice", "email": "alice@test.com", "phone": "555-0001", "role": "tenant"},
 			},
 		})
 	})
@@ -163,8 +203,10 @@ func TestBinary_ContactsList_TableOutput(t *testing.T) {
 	if !strings.Contains(stdout, "ID") || !strings.Contains(stdout, "NAME") {
 		t.Errorf("expected table headers in output, got: %s", stdout)
 	}
-	if !strings.Contains(stdout, "Alice") {
-		t.Errorf("expected 'Alice' in table output, got: %s", stdout)
+	for _, want := range []string{"Alice", "ROLE", "tenant"} {
+		if !strings.Contains(stdout, want) {
+			t.Errorf("expected %q in table output, got: %s", want, stdout)
+		}
 	}
 }
 
@@ -216,6 +258,49 @@ func TestBinary_ContactsCreate(t *testing.T) {
 	}
 }
 
+func TestBinary_ContactsCreate_CanonicalPayload(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/contacts", func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decoding request body: %v", err)
+		}
+		want := map[string]any{
+			"name":   "Ada Lovelace",
+			"email":  "ada@example.com",
+			"role":   "tenant",
+			"status": "prospect",
+		}
+		if len(body) != len(want) {
+			t.Errorf("payload = %v, want exactly %v", body, want)
+		}
+		for key, value := range want {
+			if body[key] != value {
+				t.Errorf("body[%q] = %v, want %v", key, body[key], value)
+			}
+		}
+		if _, ok := body["type"]; ok {
+			t.Error("legacy contact field type must not be sent")
+		}
+		if _, ok := body["phone"]; ok {
+			t.Error("empty phone must be omitted")
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"id": "c100"}})
+	})
+
+	srv := mockAPI(t, mux)
+	stdout, _, err := runBinary(t, envForMock(srv), "contacts", "create",
+		"--name", "Ada Lovelace", "--email", "ada@example.com", "--role", "tenant", "--status", "prospect")
+	if err != nil {
+		t.Fatalf("exit error: %v", err)
+	}
+	if !strings.Contains(stdout, "c100") {
+		t.Errorf("expected created contact id in output, got: %s", stdout)
+	}
+}
+
 func TestBinary_ContactsCreate_MissingName(t *testing.T) {
 	srv := mockAPI(t, http.NewServeMux()) // won't be hit
 	_, stderr, err := runBinary(t, envForMock(srv), "contacts", "create")
@@ -253,7 +338,7 @@ func TestBinary_PropertiesList(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{
 			"data": []any{
-				map[string]any{"id": "p1", "name": "Oak Apartments", "address": "123 Oak St", "type": "apartment", "status": "available", "rent": "1500"},
+				map[string]any{"id": "p1", "title": "Oak Apartments", "address": "123 Oak St", "propertyType": "apartment", "status": "active", "monthlyRent": 1500},
 			},
 		})
 	})
@@ -268,14 +353,277 @@ func TestBinary_PropertiesList(t *testing.T) {
 	}
 }
 
-func TestBinary_PropertiesCreate_MissingName(t *testing.T) {
+func TestBinary_PropertiesList_TableOutput(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/properties", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": []any{map[string]any{
+				"id": "p1", "title": "Oak Apartments", "address": "123 Oak St",
+				"propertyType": "apartment", "status": "active", "monthlyRent": 1500,
+			}},
+		})
+	})
+
+	srv := mockAPI(t, mux)
+	stdout, _, err := runBinary(t, envForMock(srv), "properties", "list")
+	if err != nil {
+		t.Fatalf("exit error: %v", err)
+	}
+	for _, want := range []string{"TITLE", "PROPERTY TYPE", "MONTHLY RENT", "Oak Apartments", "apartment", "1500"} {
+		if !strings.Contains(stdout, want) {
+			t.Errorf("expected %q in table output, got: %s", want, stdout)
+		}
+	}
+}
+
+func TestBinary_PropertiesCreate_CanonicalPayload(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/properties", func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decoding request body: %v", err)
+		}
+		want := map[string]any{
+			"title":        "Downtown Loft",
+			"address":      "123 Main St",
+			"monthlyRent":  float64(1800),
+			"bedrooms":     float64(0),
+			"bathrooms":    float64(1),
+			"propertyType": "apartment",
+			"isPublic":     false,
+		}
+		if len(body) != len(want) {
+			t.Errorf("payload = %v, want exactly %v", body, want)
+		}
+		for key, value := range want {
+			if body[key] != value {
+				t.Errorf("body[%q] = %v, want %v", key, body[key], value)
+			}
+		}
+		for _, legacy := range []string{"name", "type", "rent"} {
+			if _, ok := body[legacy]; ok {
+				t.Errorf("legacy property field %q must not be sent", legacy)
+			}
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"id": "p100"}})
+	})
+
+	srv := mockAPI(t, mux)
+	stdout, _, err := runBinary(t, envForMock(srv), "properties", "create",
+		"--title", "Downtown Loft", "--address", "123 Main St", "--monthly-rent", "1800",
+		"--bedrooms", "0", "--bathrooms", "1", "--property-type", "apartment", "--is-public=false")
+	if err != nil {
+		t.Fatalf("exit error: %v", err)
+	}
+	if !strings.Contains(stdout, "p100") {
+		t.Errorf("expected created property id in output, got: %s", stdout)
+	}
+}
+
+func TestBinary_PropertiesCreate_TrialSafePayload(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/properties", func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decoding request body: %v", err)
+		}
+		want := map[string]any{
+			"title":       "Trial Loft",
+			"address":     "123 Trial St",
+			"monthlyRent": float64(1600),
+			"bedrooms":    float64(0),
+			"bathrooms":   float64(1),
+			"isPublic":    false,
+		}
+		if len(body) != len(want) {
+			t.Errorf("trial payload = %v, want exactly %v", body, want)
+		}
+		for key, value := range want {
+			if body[key] != value {
+				t.Errorf("body[%q] = %v, want %v", key, body[key], value)
+			}
+		}
+		for _, forbidden := range []string{"name", "type", "rent", "propertyType", "imageUrls"} {
+			if _, ok := body[forbidden]; ok {
+				t.Errorf("trial property field %q must not be sent", forbidden)
+			}
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"id": "ptrial"}})
+	})
+
+	srv := mockAPI(t, mux)
+	stdout, _, err := runBinary(t, envForMock(srv), "properties", "create",
+		"--title", "Trial Loft", "--address", "123 Trial St", "--monthly-rent", "1600",
+		"--bedrooms", "0", "--bathrooms", "1", "--is-public=false")
+	if err != nil {
+		t.Fatalf("exit error: %v", err)
+	}
+	if !strings.Contains(stdout, "ptrial") {
+		t.Errorf("expected trial property id in output, got: %s", stdout)
+	}
+}
+
+func TestBinary_PropertiesUpdate_CanonicalPayload(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/properties/p100", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPatch {
+			t.Errorf("method = %q, want PATCH", r.Method)
+		}
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decoding request body: %v", err)
+		}
+		want := map[string]any{
+			"title":        "Updated Loft",
+			"monthlyRent":  float64(1900),
+			"propertyType": "condo",
+		}
+		if len(body) != len(want) {
+			t.Errorf("payload = %v, want exactly %v", body, want)
+		}
+		for key, value := range want {
+			if body[key] != value {
+				t.Errorf("body[%q] = %v, want %v", key, body[key], value)
+			}
+		}
+		for _, legacy := range []string{"name", "type", "rent"} {
+			if _, ok := body[legacy]; ok {
+				t.Errorf("legacy property field %q must not be sent", legacy)
+			}
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"id": "p100"}})
+	})
+
+	srv := mockAPI(t, mux)
+	stdout, _, err := runBinary(t, envForMock(srv), "properties", "update", "p100",
+		"--title", "Updated Loft", "--monthly-rent", "1900", "--property-type", "condo")
+	if err != nil {
+		t.Fatalf("exit error: %v", err)
+	}
+	if !strings.Contains(stdout, "p100") {
+		t.Errorf("expected updated property id in output, got: %s", stdout)
+	}
+}
+
+func TestBinary_ContactsUpdate_CanonicalPayload(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/contacts/c100", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPatch {
+			t.Errorf("method = %q, want PATCH", r.Method)
+		}
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decoding request body: %v", err)
+		}
+		if body["role"] != "landlord" || len(body) != 1 {
+			t.Errorf("payload = %v, want only canonical role", body)
+		}
+		if _, ok := body["type"]; ok {
+			t.Error("legacy contact field type must not be sent")
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"id": "c100"}})
+	})
+
+	srv := mockAPI(t, mux)
+	stdout, _, err := runBinary(t, envForMock(srv), "contacts", "update", "c100", "--role", "landlord")
+	if err != nil {
+		t.Fatalf("exit error: %v", err)
+	}
+	if !strings.Contains(stdout, "c100") {
+		t.Errorf("expected updated contact id in output, got: %s", stdout)
+	}
+}
+
+func TestBinary_429TimedRetryGuidance(t *testing.T) {
+	requests := 0
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/contacts", func(w http.ResponseWriter, _ *http.Request) {
+		requests++
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.Header().Set("Retry-After", "3")
+		w.WriteHeader(http.StatusTooManyRequests)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"type":   "https://rentalot.ai/problems/rate-limited",
+			"title":  "Rate Limited",
+			"status": 429,
+			"detail": "Write rate limit exceeded for contacts (5/min)",
+		})
+	})
+
+	srv := mockAPI(t, mux)
+	_, stderr, err := runBinary(t, envForMock(srv), "contacts", "list")
+	if err == nil {
+		t.Fatal("expected non-zero exit for 429")
+	}
+	if requests != 1 {
+		t.Errorf("requests = %d, want no automatic retry", requests)
+	}
+	if !strings.Contains(stderr, "retry after 3 seconds") {
+		t.Errorf("stderr = %q, want timed retry guidance", stderr)
+	}
+}
+
+func TestBinary_429TerminalTrialGuidance(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/contacts", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(http.StatusTooManyRequests)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"type":   "https://rentalot.ai/problems/rate-limited",
+			"title":  "Rate Limited",
+			"status": 429,
+			"detail": "Trial lifetime quota exhausted; upgrade to continue",
+		})
+	})
+
+	srv := mockAPI(t, mux)
+	_, stderr, err := runBinary(t, envForMock(srv), "contacts", "list")
+	if err == nil {
+		t.Fatal("expected non-zero exit for terminal trial quota")
+	}
+	if !strings.Contains(stderr, "key rotation does not reset") {
+		t.Errorf("stderr = %q, want account-wide quota guidance", stderr)
+	}
+}
+
+func TestBinary_401ExpiryRevocationGuidance(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/contacts/c1", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(http.StatusUnauthorized)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"type":   "https://rentalot.ai/problems/unauthorized",
+			"title":  "Unauthorized",
+			"status": 401,
+			"detail": "Missing or invalid API key",
+		})
+	})
+
+	srv := mockAPI(t, mux)
+	_, stderr, err := runBinary(t, envForMock(srv), "contacts", "get", "c1")
+	if err == nil {
+		t.Fatal("expected non-zero exit for unauthorized key")
+	}
+	if !strings.Contains(stderr, "expired or revoked") {
+		t.Errorf("stderr = %q, want expiry/revocation guidance", stderr)
+	}
+}
+
+func TestBinary_PropertiesCreate_MissingRequiredField(t *testing.T) {
 	srv := mockAPI(t, http.NewServeMux())
 	_, stderr, err := runBinary(t, envForMock(srv), "properties", "create")
 	if err == nil {
-		t.Fatal("expected non-zero exit for missing --name")
+		t.Fatal("expected non-zero exit for missing required property fields")
 	}
-	if !strings.Contains(stderr, "name") {
-		t.Errorf("expected 'name' error in stderr, got: %s", stderr)
+	if !strings.Contains(stderr, "address") {
+		t.Errorf("expected address error in stderr, got: %s", stderr)
 	}
 }
 

@@ -6,17 +6,46 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
 // APIError represents an error returned by the Rentalot API.
 type APIError struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Code       string `json:"code"`
+	Message    string `json:"message"`
+	StatusCode int    `json:"-"`
+	// RetryAfter is the server-provided number of seconds before a retry.
+	// A zero value means that no timed retry was provided.
+	RetryAfter int `json:"retry_after,omitempty"`
 }
 
 func (e *APIError) Error() string {
-	return fmt.Sprintf("%s: %s", e.Code, e.Message)
+	message := fmt.Sprintf("%s: %s", e.Code, e.Message)
+	switch {
+	case e.StatusCode == http.StatusUnauthorized:
+		return message + " (check that the API key is valid and not expired or revoked)"
+	case e.StatusCode == http.StatusTooManyRequests && e.RetryAfter > 0:
+		return fmt.Sprintf("%s (retry after %d seconds; do not retry automatically)", message, e.RetryAfter)
+	case e.StatusCode == http.StatusTooManyRequests && isTrialQuotaMessage(e.Message):
+		return message + " (no timed retry; key rotation does not reset account-wide trial quota)"
+	case e.StatusCode == http.StatusTooManyRequests:
+		return message + " (no timed retry was provided; check the account quota before retrying)"
+	default:
+		return message
+	}
+}
+
+// Retryable reports whether the server supplied a safe, timed retry interval.
+// Callers must still avoid automatic retries for mutations unless they have an
+// idempotency contract appropriate for their operation.
+func (e *APIError) Retryable() bool {
+	return e.StatusCode == http.StatusTooManyRequests && e.RetryAfter > 0
+}
+
+func isTrialQuotaMessage(message string) bool {
+	message = strings.ToLower(message)
+	return strings.Contains(message, "trial") || strings.Contains(message, "lifetime")
 }
 
 // Client is a thin HTTP wrapper for the Rentalot REST API.
@@ -111,16 +140,35 @@ func (c *Client) do(ctx context.Context, method, rawURL string, body *strings.Re
 // DecodeError extracts an APIError from a non-2xx response body.
 // It supports both { "error": { "code", "message" } } and RFC 9457 { "type", "detail" } shapes.
 func DecodeError(resp *http.Response) error {
+	if resp == nil {
+		return &APIError{Code: "unknown", Message: "missing HTTP response"}
+	}
+	statusCode, retryAfter := responseErrorMetadata(resp)
+	if resp.Body == nil {
+		return &APIError{
+			Code:       "unknown",
+			Message:    fmt.Sprintf("HTTP %d", statusCode),
+			StatusCode: statusCode,
+			RetryAfter: retryAfter,
+		}
+	}
+
 	var envelope struct {
-		Error *APIError `json:"error"`
-		// RFC 9457
-		Type   string `json:"type"`
-		Detail string `json:"detail"`
+		Error  *APIError `json:"error"`
+		Type   string    `json:"type"`
+		Detail string    `json:"detail"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&envelope); err != nil {
-		return &APIError{Code: "unknown", Message: fmt.Sprintf("HTTP %d", resp.StatusCode)}
+		return &APIError{
+			Code:       "unknown",
+			Message:    fmt.Sprintf("HTTP %d", statusCode),
+			StatusCode: statusCode,
+			RetryAfter: retryAfter,
+		}
 	}
 	if envelope.Error != nil {
+		envelope.Error.StatusCode = statusCode
+		envelope.Error.RetryAfter = retryAfter
 		return envelope.Error
 	}
 	if envelope.Detail != "" {
@@ -128,7 +176,26 @@ func DecodeError(resp *http.Response) error {
 		if code == "" {
 			code = "problem"
 		}
-		return &APIError{Code: code, Message: envelope.Detail}
+		return &APIError{
+			Code:       code,
+			Message:    envelope.Detail,
+			StatusCode: statusCode,
+			RetryAfter: retryAfter,
+		}
 	}
-	return &APIError{Code: "unknown", Message: fmt.Sprintf("HTTP %d", resp.StatusCode)}
+	return &APIError{
+		Code:       "unknown",
+		Message:    fmt.Sprintf("HTTP %d", statusCode),
+		StatusCode: statusCode,
+		RetryAfter: retryAfter,
+	}
+}
+
+func responseErrorMetadata(resp *http.Response) (statusCode, retryAfter int) {
+	statusCode = resp.StatusCode
+	retryAfter, err := strconv.Atoi(strings.TrimSpace(resp.Header.Get("Retry-After")))
+	if err != nil || retryAfter < 0 {
+		retryAfter = 0
+	}
+	return statusCode, retryAfter
 }

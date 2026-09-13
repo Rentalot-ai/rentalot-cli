@@ -35,6 +35,38 @@ make build    # Binary at bin/rentalot
 rentalot --help
 ```
 
+## API setup and trial preview
+
+Configure the server origin, not `/api/v1`, and use the same origin for account sign-in, API-key issuance, CLI requests, and CRM read-back:
+
+```bash
+export RENTALOT_API_KEY="ra_..."
+export RENTALOT_BASE_URL="http://localhost:3000" # local development trial
+rentalot config show
+```
+
+Free Trial API access is development-only behind the server-side `trialApiAccess` gate. It permits account-owned, private, image-free property and contact CRUD. Production trial access remains disabled, and Starter remains read-only. Trial keys expire at the fixed account trial deadline and owner revocation is immediate. The dashboard keeps key listing and revocation available after expiry; only new trial-key issuance is gated.
+
+Trial limits are shared by the account across active keys and key rotation: 20 requests/minute, 10 reads/minute and 5 writes/minute per resource, 200 requests/day, 700 requests over the trial, 20 resource writes/day, 50 resource writes over the trial, and 20 items per list page. Rotating keys does not reset those limits.
+
+## Canonical property and contact writes
+
+Property create requires `--address`, `--monthly-rent`, `--bedrooms`, and `--bathrooms`. Optional canonical fields include `--title`, `--property-type`, `--status`, `--is-public`, `--city`, `--state`, `--zip`, and `--description`. Canonical property types are `house`, `apartment`, `condo`, `townhouse`, and `room`; a studio is represented by `--bedrooms 0`. For the development-only trial first job, omit `--property-type` because that field is separately feature-gated, and keep the write private.
+
+```bash
+rentalot properties create \
+  --title "Downtown Loft" --address "123 Main St" \
+  --monthly-rent 1800 --bedrooms 0 --bathrooms 1 \
+  --is-public=false
+rentalot properties update "$PROPERTY_ID" --title "Downtown Loft Updated" --monthly-rent 1900
+rentalot contacts create --name "Ada Lovelace" --email ada@example.com --role tenant
+rentalot contacts update "$CONTACT_ID" --role tenant
+```
+
+Older `--name`, `--type`, and `--rent` property flags, plus contact `--type`, are deprecated aliases. They are translated to canonical JSON keys: property `name` becomes `title`, property `type` becomes `propertyType`, property `rent` becomes `monthlyRent`, and contact `type` becomes `role`. Contact `name` remains a canonical field. Contact creation requires a name and at least one of email or phone.
+
+Use `--json` to preserve the API response envelope. A `401` means the key is missing, expired, or revoked, so configure an active key at the same origin. A `429` with `Retry-After` is a timed server instruction; the CLI reports it and does not retry automatically because attempts consume quota. A trial lifetime exhaustion response has no timed retry; upgrade to continue, and do not rotate keys to bypass account-wide limits.
+
 ## Library Usage
 
 ```go
