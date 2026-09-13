@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -180,5 +181,75 @@ func TestDecodeError_EnvelopeShape(t *testing.T) {
 				t.Errorf("error = %q, want %q", err.Error(), tc.wantMsg)
 			}
 		})
+	}
+}
+
+func TestDecodeError_PreservesStatusAndRetryAfter(t *testing.T) {
+	resp := &http.Response{
+		StatusCode: http.StatusTooManyRequests,
+		Header:     http.Header{"Retry-After": []string{"3"}},
+		Body: io.NopCloser(strings.NewReader(`{
+			"type":"https://rentalot.ai/problems/rate-limited",
+			"title":"Rate Limited",
+			"status":429,
+			"detail":"Write rate limit exceeded for contacts (5/min)"
+		}`)),
+	}
+
+	err := rentalotcli.DecodeError(resp)
+	apiErr, ok := err.(*rentalotcli.APIError)
+	if !ok {
+		t.Fatalf("error type = %T, want *APIError", err)
+	}
+	value := reflect.ValueOf(apiErr).Elem()
+	status := value.FieldByName("StatusCode")
+	if !status.IsValid() || status.Int() != http.StatusTooManyRequests {
+		t.Fatalf("StatusCode = %v, want %d", status, http.StatusTooManyRequests)
+	}
+	retryAfter := value.FieldByName("RetryAfter")
+	if !retryAfter.IsValid() || retryAfter.Int() != 3 {
+		t.Fatalf("RetryAfter = %v, want 3", retryAfter)
+	}
+	if !apiErr.Retryable() {
+		t.Error("Retryable() = false, want true for a timed 429")
+	}
+	if !strings.Contains(err.Error(), "retry after 3 seconds") {
+		t.Errorf("error = %q, want timed retry guidance", err)
+	}
+}
+
+func TestDecodeError_AuthenticationRecoveryGuidance(t *testing.T) {
+	resp := &http.Response{
+		StatusCode: http.StatusUnauthorized,
+		Body:       io.NopCloser(strings.NewReader(`{"type":"https://rentalot.ai/problems/unauthorized","detail":"Missing or invalid API key"}`)),
+	}
+
+	err := rentalotcli.DecodeError(resp)
+	if !strings.Contains(err.Error(), "expired or revoked") {
+		t.Errorf("error = %q, want expiry/revocation guidance", err)
+	}
+}
+
+func TestDecodeError_TerminalQuotaRecoveryGuidance(t *testing.T) {
+	resp := &http.Response{
+		StatusCode: http.StatusTooManyRequests,
+		Body: io.NopCloser(strings.NewReader(`{
+			"type":"https://rentalot.ai/problems/rate-limited",
+			"title":"Rate Limited",
+			"status":429,
+			"detail":"Trial lifetime quota exhausted; upgrade to continue"
+		}`)),
+	}
+
+	err := rentalotcli.DecodeError(resp)
+	apiErr, ok := err.(*rentalotcli.APIError)
+	if !ok {
+		t.Fatalf("error type = %T, want *APIError", err)
+	}
+	if apiErr.Retryable() {
+		t.Error("Retryable() = true, want false without a timed Retry-After")
+	}
+	if !strings.Contains(err.Error(), "key rotation does not reset") {
+		t.Errorf("error = %q, want account-wide quota recovery guidance", err)
 	}
 }

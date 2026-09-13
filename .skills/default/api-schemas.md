@@ -13,22 +13,24 @@ All IDs are `string (uuid)`:
 
 ## Property
 
+The v1 public property response omits internal ownership and lifecycle fields. Existing legacy records may have a null `propertyType`.
+
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | id | string (uuid) | Yes | Unique property identifier |
-| userId | string | Yes | Owner tenant ID |
+| title | string | Yes | Human-readable title; omitted create titles are derived from address |
 | address | string | Yes | Street address |
-| city | string | Yes | City name |
-| state | string | Yes | State/province code |
-| zip | string | Yes | ZIP/postal code |
+| city | string or null | Yes | City name |
+| state | string or null | Yes | State/province code |
+| zip | string or null | Yes | ZIP/postal code |
 | monthlyRent | integer | Yes | Monthly rent in whole dollars |
-| bedrooms | integer | Yes | Number of bedrooms |
-| bathrooms | number | Yes | Number of bathrooms (supports 0.5 increments) |
-| features | array[string] | Yes | List of property features/amenities |
-| availabilityDate | string | Yes | ISO 8601 date (YYYY-MM-DD) |
-| status | string | Yes | `active`, `rented`, `inactive`, `archived` |
-| description | string | Yes | Free-text description |
-| ownerId | string (uuid) | Yes | Optional owner contact reference |
+| bedrooms | integer | Yes | Number of bedrooms; `0` represents a studio |
+| propertyType | string or null | Yes | `house`, `apartment`, `condo`, `townhouse`, or `room` |
+| bathrooms | number | Yes | Number of bathrooms |
+| features | array[string] | Yes | Property features/amenities |
+| status | string | Yes | `active`, `rented`, `inactive`, or `archived` |
+| availabilityDate | string or null | Yes | ISO 8601 date (YYYY-MM-DD) |
+| description | string or null | Yes | Free-text description |
 | createdAt | string | Yes | ISO 8601 timestamp |
 | updatedAt | string | Yes | ISO 8601 timestamp |
 
@@ -38,58 +40,51 @@ Required: `address`, `monthlyRent`, `bedrooms`, `bathrooms`
 
 | Field | Type | Description |
 |-------|------|-------------|
+| title | string | Optional human-readable title |
 | address | string | Street address |
 | city | string | City |
 | state | string | State/province |
 | zip | string | ZIP/postal code |
 | monthlyRent | integer | Monthly rent (whole dollars) |
-| bedrooms | integer | Bedrooms |
-| bathrooms | number | Bathrooms (0.5 increments) |
+| bedrooms | integer | Bedrooms; non-negative, including `0` for a studio |
+| propertyType | string | `house` / `apartment` / `condo` / `townhouse` / `room` |
+| bathrooms | number | Positive bathroom count |
 | features | array[string] | Features/amenities |
 | availabilityDate | string (date) | Available date |
 | status | string | `active` / `rented` / `inactive` / `archived` |
-| isPublic | boolean | Public listing visibility |
+| isPublic | boolean | Public listing visibility; trial writes must remain private |
 | description | string | Property description |
-| ownerId | string (uuid) | Owner contact ID |
-| amenities | array[string] | Amenity list |
-| petPolicy | string | `allowed` / `not-allowed` / `negotiable` |
-| parking | string | `included` / `available` / `none` |
-| laundry | string | `in-unit` / `in-building` / `none` |
-| leaseMinMonths | integer | Minimum lease length |
-| leaseMaxMonths | integer | Maximum lease length |
-| moveInDate | string (date) | Move-in date |
-| depositAmount | integer | Security deposit (dollars) |
-| utilitiesIncluded | array[string] | Included utilities |
-| squareFootage | integer | Square footage |
-| yearBuilt | integer | Year built |
-| neighborhoodDescription | string | Neighborhood info |
-| url | string (uri) | External listing URL |
-| internalNotes | string | Internal notes (not shown to prospects) |
+
+The general v1 schema accepts canonical `propertyType` values when the server-side property-types feature is enabled. The development-only trial first-job path should omit `propertyType` and keep `isPublic` false; trial eligibility and limits remain server-owned.
 
 ## UpdatePropertyRequest
 
-Same fields as `CreatePropertyRequest`, all optional. Send only fields to change.
+Same canonical fields as `CreatePropertyRequest`, all optional. Send only fields to change. Use `title`, `propertyType`, and `monthlyRent`, never legacy `name`, `type`, or `rent` JSON keys.
 
 ---
 
 ## Contact
 
+The v1 public contact response omits `userId`, `deletedAt`, `metadata`, and `notes`.
+
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| id | string (uuid) | Yes | |
+| id | string (uuid) | Yes | Unique contact identifier |
 | name | string | Yes | Full name |
-| email | string | Yes | Email address |
-| phone | string | Yes | Phone (E.164) |
+| email | string or null | Yes | Email address when supplied |
+| phone | string or null | Yes | Phone number when supplied |
 | status | string | Yes | `prospect` / `scheduled` / `applicant` / `renter` / `archived` |
-| channelPreference | string | Yes | Preferred messaging channel |
-| source | string | Yes | Acquisition source |
-| referralSource | string | Yes | External referral |
+| role | string | Yes | `prospect` / `tenant` / `landlord` / `property_manager` / `vendor` / `other` |
+| channelPreference | string or null | Yes | Preferred messaging channel |
+| source | string or null | Yes | Acquisition source |
+| referralSource | string or null | Yes | External referral |
+| language | string | Yes | ISO 639-1 language code |
 | createdAt | string | Yes | ISO 8601 |
 | updatedAt | string | Yes | ISO 8601 |
 
 ## CreateContact
 
-Required: `name` + at least one of `email` or `phone`
+Required: `name` plus at least one of `email` or `phone`.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
@@ -105,7 +100,7 @@ Required: `name` + at least one of `email` or `phone`
 
 ## UpdateContact
 
-All optional: `name`, `email`, `phone`, `status`, `role`, `channelPreference`, `source`, `referralSource`, `language`, `notes`
+All optional: `name`, `email`, `phone`, `status`, `role`, `channelPreference`, `source`, `referralSource`, `language`, `notes`. The CLI's deprecated `--type` flag is translated to the canonical `role` key.
 
 ---
 

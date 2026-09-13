@@ -27,7 +27,7 @@ Go CLI and library for the Rentalot v1 REST API — manage rental properties, co
 > - [product-docs.md](product-docs.md) — How Rentalot works: properties, photos, showings, workflows (step types, templates), agent behavior, slash commands, settings, FAQ. Read for domain context.
 > - [bulk-import.md](bulk-import.md) — Bulk property import: CSV/Excel/JSON column schema, value coercion rules, auto-detected PMS exports (AppFolio, Buildium, Zillow, etc.), API bulk endpoint.
 >
-> **Note:** The CLI code in `pkg/rentalotcli/` is the authoritative API reference — it implements all endpoints. Don't duplicate endpoint docs; read the Go source instead.
+> **Note:** The CLI code in `cmd/rentalot/` and `pkg/rentalotcli/` defines the registered commands and transport. The Rentalot v1 OpenAPI document remains authoritative for request and response fields; registered resource coverage is not full API parity.
 >
 > **Live docs** (crawl for latest): https://rentalot.ai/llms.txt — index of all doc pages.
 > - Product docs: `https://rentalot.ai/docs/{page}`
@@ -41,6 +41,10 @@ export RENTALOT_API_KEY="ra_..."                   # API key (Settings > API Key
 export RENTALOT_BASE_URL="http://localhost:3000"   # default: https://rentalot.ai
 ```
 
+The value is the server origin, not `/api/v1`. For a Free Trial, use a local development server with the server-side `trialApiAccess` gate enabled. Production keeps trial API access disabled. Create and verify the account, issue the key in **Settings > API Keys**, and use the same origin for sign-in, key issuance, CLI requests, and CRM read-back.
+
+Free Trial access is limited to account-owned, private, image-free property and contact CRUD. Starter remains read-only. Trial limits are account-wide across all active keys and key rotation: 20 requests/minute, 10 reads/minute and 5 writes/minute per resource, 200 requests/day, 700 requests over the trial, 20 resource writes/day, 50 resource writes over the trial, and 20 items per list page. Trial keys expire at the fixed account trial deadline and revocation is immediate. Rotating a key does not reset quota.
+
 ## Commands
 
 ```bash
@@ -51,15 +55,15 @@ rentalot-cli completion bash               # Shell completion: bash|zsh|fish|pow
 # Properties
 rentalot-cli properties list               # --status --min-rent --max-rent --city --limit --page
 rentalot-cli properties get <id>
-rentalot-cli properties create
-rentalot-cli properties update <id>
+rentalot-cli properties create              # --address --monthly-rent --bedrooms --bathrooms
+rentalot-cli properties update <id>         # --title --monthly-rent --property-type, etc.
 rentalot-cli properties delete <id>
 
 # Contacts
 rentalot-cli contacts list
 rentalot-cli contacts get <id>
-rentalot-cli contacts create
-rentalot-cli contacts update <id>
+rentalot-cli contacts create               # --name plus --email or --phone; optional --role
+rentalot-cli contacts update <id>          # --role, --status, or another canonical field
 rentalot-cli contacts delete <id>
 
 # Showings
@@ -107,6 +111,23 @@ rentalot-cli settings followups update
 --page N    # Page number
 ```
 
+## Canonical first CRM job
+
+Property writes use `title`, `address`, `monthlyRent`, `bedrooms`, `bathrooms`, and optional `propertyType`, `status`, and `isPublic`. `--name`, `--type`, and `--rent` remain deprecated flag aliases for older scripts, but the CLI translates them to property `title`, `propertyType`, and `monthlyRent`; those legacy property JSON keys are never sent. Contact `name` remains canonical, while contact `--type` is translated to `role`. Property types are `house`, `apartment`, `condo`, `townhouse`, and `room`. A studio is `--bedrooms 0`, not a property type. For the development-only trial first job, omit `propertyType` because it is separately feature-gated and keep `isPublic` false.
+
+Contact writes use `role`, not `type`. A single contact create requires `--name` and at least one of `--email` or `--phone`; empty optional values are omitted. The role values are `prospect`, `tenant`, `landlord`, `property_manager`, `vendor`, and `other`.
+
+```bash
+rentalot properties create \
+  --title "Downtown Loft" --address "123 Main St" \
+  --monthly-rent 1800 --bedrooms 0 --bathrooms 1 \
+  --is-public=false
+rentalot contacts create \
+  --name "Ada Lovelace" --email ada@example.com --role tenant
+```
+
+Use `--json` for the canonical response envelope. The CLI does not create accounts or API keys. After a key expires or is revoked, issue or configure an appropriate active key at the same server origin. A `429` with `Retry-After` is a timed server instruction, but the CLI does not retry automatically because failed attempts consume quota. A `429` without a timed retry can indicate trial lifetime exhaustion; upgrade to continue rather than rotating keys.
+
 ## Development
 
 ```bash
@@ -127,7 +148,7 @@ make sync-schema    # Pull OpenAPI spec from running rentalot dev server
 ```
 cmd/rentalot-cli/        # main.go -- cobra root, registers subcommands
 internal/version/        # Version info (injected via ldflags at build time)
-internal/api/            # openapi.json -- synced from rentalot repo
+  internal/api/            # optional openapi.json -- synced from a running rentalot dev server
 pkg/rentalotcli/         # Public library
   client.go              # HTTP client (Bearer auth, base URL, error unwrap)
   config.go              # Config loading from env

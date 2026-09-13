@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -39,8 +40,27 @@ func executeCommand(t *testing.T, handler http.HandlerFunc, cmd *cobra.Command, 
 	jsonOutput = true
 	t.Cleanup(func() { jsonOutput = false })
 
-	err := cmd.Execute()
-	return buf.String(), err
+	stdout, err := captureStdout(t, cmd.Execute)
+	return buf.String() + stdout, err
+}
+
+func captureStdout(t *testing.T, run func() error) (string, error) {
+	t.Helper()
+	reader, writer, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("creating stdout pipe: %v", err)
+	}
+	original := os.Stdout
+	os.Stdout = writer
+	runErr := run()
+	_ = writer.Close()
+	os.Stdout = original
+	data, readErr := io.ReadAll(reader)
+	_ = reader.Close()
+	if readErr != nil {
+		t.Fatalf("reading captured stdout: %v", readErr)
+	}
+	return string(data), runErr
 }
 
 // executeCommandTable is like executeCommand but with jsonOutput=false to exercise table rendering.
@@ -65,8 +85,8 @@ func executeCommandTable(t *testing.T, handler http.HandlerFunc, cmd *cobra.Comm
 	jsonOutput = false
 	t.Cleanup(func() { jsonOutput = false })
 
-	err := cmd.Execute()
-	return buf.String(), err
+	stdout, err := captureStdout(t, cmd.Execute)
+	return buf.String() + stdout, err
 }
 
 // jsonHandler returns an HTTP handler that responds with the given JSON body.
@@ -88,7 +108,7 @@ func jsonHandler(t *testing.T, wantMethod, wantPath string, statusCode int, body
 func TestContactsListCmd(t *testing.T) {
 	data := map[string]any{
 		"data": []any{
-			map[string]any{"id": "c1", "name": "Alice", "email": "alice@test.com", "phone": "555-0001", "type": "tenant"},
+			map[string]any{"id": "c1", "name": "Alice", "email": "alice@test.com", "phone": "555-0001", "role": "tenant"},
 		},
 	}
 	handler := jsonHandler(t, http.MethodGet, "/api/v1/contacts", http.StatusOK, data)
@@ -130,6 +150,86 @@ func TestContactsCreateCmd(t *testing.T) {
 	}
 }
 
+func TestContactsCreateCmd_UsesCanonicalRoleAndOmitsEmptyFields(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decoding request body: %v", err)
+		}
+		want := map[string]any{
+			"name":   "Ada Lovelace",
+			"email":  "ada@example.com",
+			"role":   "tenant",
+			"status": "prospect",
+		}
+		if len(body) != len(want) {
+			t.Errorf("payload keys = %v, want exactly %v", body, want)
+		}
+		for key, value := range want {
+			if body[key] != value {
+				t.Errorf("body[%q] = %v, want %v", key, body[key], value)
+			}
+		}
+		if _, ok := body["type"]; ok {
+			t.Error("legacy field type must not be sent")
+		}
+		if _, ok := body["phone"]; ok {
+			t.Error("empty phone must be omitted")
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"id": "c1"}})
+	}
+
+	_, err := executeCommand(t, handler, contactsCreateCmd(),
+		"--name", "Ada Lovelace", "--email", "ada@example.com", "--role", "tenant", "--status", "prospect")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestContactsCreateCmd_RequiresEmailOrPhone(t *testing.T) {
+	hit := false
+	handler := func(w http.ResponseWriter, _ *http.Request) {
+		hit = true
+		w.WriteHeader(http.StatusCreated)
+	}
+
+	_, err := executeCommand(t, handler, contactsCreateCmd(), "--name", "No Contact Method")
+	if err == nil {
+		t.Fatal("expected error when email and phone are both missing")
+	}
+	if hit {
+		t.Fatal("request should be rejected before contacting the API")
+	}
+	if !strings.Contains(err.Error(), "email") || !strings.Contains(err.Error(), "phone") {
+		t.Errorf("error = %q, want email or phone guidance", err)
+	}
+}
+
+func TestContactsCreateCmd_LegacyTypeMapsToRole(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decoding request body: %v", err)
+		}
+		if body["role"] != "tenant" {
+			t.Errorf("role = %v, want tenant", body["role"])
+		}
+		if _, ok := body["type"]; ok {
+			t.Error("legacy field type must not be sent")
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"id": "c1"}})
+	}
+
+	_, err := executeCommand(t, handler, contactsCreateCmd(), "--name", "Legacy Contact", "--email", "legacy@example.com", "--type", "tenant")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestContactsCreateCmd_MissingName(t *testing.T) {
 	handler := func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -146,6 +246,47 @@ func TestContactsUpdateCmd(t *testing.T) {
 	_, err := executeCommand(t, handler, contactsUpdateCmd(), "c1", "--name", "Bob")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestContactsUpdateCmd_UsesCanonicalRole(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decoding request body: %v", err)
+		}
+		if body["role"] != "landlord" {
+			t.Errorf("role = %v, want landlord", body["role"])
+		}
+		if _, ok := body["type"]; ok {
+			t.Error("legacy field type must not be sent")
+		}
+		if len(body) != 1 {
+			t.Errorf("payload = %v, want only role", body)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"id": "c1"}})
+	}
+
+	_, err := executeCommand(t, handler, contactsUpdateCmd(), "c1", "--role", "landlord")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestContactsListCmd_UsesCanonicalRoleOutput(t *testing.T) {
+	data := map[string]any{"data": []any{map[string]any{
+		"id": "c1", "name": "Ada Lovelace", "email": "ada@example.com",
+		"phone": "+15125550101", "role": "tenant",
+	}}}
+	output, err := executeCommandTable(t, jsonHandler(t, http.MethodGet, "/api/v1/contacts", http.StatusOK, data), contactsListCmd())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, want := range []string{"ROLE", "Ada Lovelace", "tenant"} {
+		if !strings.Contains(output, want) {
+			t.Errorf("output missing %q: %s", want, output)
+		}
 	}
 }
 
@@ -190,7 +331,7 @@ func TestContactsListCmd_WithPagination(t *testing.T) {
 // --- Properties ---
 
 func TestPropertiesListCmd(t *testing.T) {
-	data := map[string]any{"data": []any{map[string]any{"id": "p1", "name": "Apt A"}}}
+	data := map[string]any{"data": []any{map[string]any{"id": "p1", "title": "Apt A", "monthlyRent": 1500}}}
 	_, err := executeCommand(t, jsonHandler(t, http.MethodGet, "/api/v1/properties", http.StatusOK, data), propertiesListCmd())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -206,17 +347,97 @@ func TestPropertiesGetCmd(t *testing.T) {
 
 func TestPropertiesCreateCmd(t *testing.T) {
 	handler := jsonHandler(t, http.MethodPost, "/api/v1/properties", http.StatusCreated, map[string]any{"id": "p1"})
-	_, err := executeCommand(t, handler, propertiesCreateCmd(), "--name", "Apt A", "--address", "123 Main St")
+	_, err := executeCommand(t, handler, propertiesCreateCmd(),
+		"--title", "Apt A", "--address", "123 Main St", "--monthly-rent", "1500", "--bedrooms", "2", "--bathrooms", "1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
-func TestPropertiesCreateCmd_MissingName(t *testing.T) {
+func TestPropertiesCreateCmd_UsesCanonicalPayload(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decoding request body: %v", err)
+		}
+		want := map[string]any{
+			"title":        "Downtown Loft",
+			"address":      "123 Main St",
+			"monthlyRent":  float64(1800),
+			"bedrooms":     float64(0),
+			"bathrooms":    float64(1),
+			"propertyType": "apartment",
+			"isPublic":     false,
+		}
+		if len(body) != len(want) {
+			t.Errorf("payload keys = %v, want exactly %v", body, want)
+		}
+		for key, value := range want {
+			if body[key] != value {
+				t.Errorf("body[%q] = %v, want %v", key, body[key], value)
+			}
+		}
+		for _, legacy := range []string{"name", "type", "rent"} {
+			if _, ok := body[legacy]; ok {
+				t.Errorf("legacy field %q must not be sent", legacy)
+			}
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"id": "p1"}})
+	}
+
+	_, err := executeCommand(t, handler, propertiesCreateCmd(),
+		"--title", "Downtown Loft",
+		"--address", "123 Main St",
+		"--monthly-rent", "1800",
+		"--bedrooms", "0",
+		"--bathrooms", "1",
+		"--property-type", "apartment",
+		"--is-public=false",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestPropertiesCreateCmd_LegacyFlagsMapToCanonicalPayload(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decoding request body: %v", err)
+		}
+		for _, legacy := range []string{"name", "type", "rent"} {
+			if _, ok := body[legacy]; ok {
+				t.Errorf("legacy field %q must not be sent", legacy)
+			}
+		}
+		if body["title"] != "Legacy Name" || body["propertyType"] != "house" || body["monthlyRent"] != float64(2100) {
+			t.Errorf("legacy flags were not translated canonically: %v", body)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"id": "p1"}})
+	}
+
+	_, err := executeCommand(t, handler, propertiesCreateCmd(),
+		"--name", "Legacy Name",
+		"--address", "123 Main St",
+		"--rent", "2100",
+		"--bedrooms", "2",
+		"--bathrooms", "1",
+		"--type", "house",
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestPropertiesCreateCmd_MissingRequiredField(t *testing.T) {
 	handler := func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) }
 	_, err := executeCommand(t, handler, propertiesCreateCmd())
 	if err == nil {
-		t.Error("expected error for missing --name")
+		t.Error("expected error for missing required property fields")
 	}
 }
 
@@ -225,6 +446,57 @@ func TestPropertiesUpdateCmd(t *testing.T) {
 	_, err := executeCommand(t, handler, propertiesUpdateCmd(), "p1", "--name", "Apt B")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestPropertiesUpdateCmd_UsesCanonicalPayload(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decoding request body: %v", err)
+		}
+		want := map[string]any{
+			"title":        "Updated Loft",
+			"monthlyRent":  float64(1900),
+			"propertyType": "condo",
+		}
+		if len(body) != len(want) {
+			t.Errorf("payload keys = %v, want exactly %v", body, want)
+		}
+		for key, value := range want {
+			if body[key] != value {
+				t.Errorf("body[%q] = %v, want %v", key, body[key], value)
+			}
+		}
+		for _, legacy := range []string{"name", "type", "rent"} {
+			if _, ok := body[legacy]; ok {
+				t.Errorf("legacy field %q must not be sent", legacy)
+			}
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"id": "p1"}})
+	}
+
+	_, err := executeCommand(t, handler, propertiesUpdateCmd(), "p1",
+		"--title", "Updated Loft", "--monthly-rent", "1900", "--property-type", "condo")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestPropertiesListCmd_UsesCanonicalOutputFields(t *testing.T) {
+	data := map[string]any{"data": []any{map[string]any{
+		"id": "p1", "title": "Downtown Loft", "address": "123 Main St",
+		"propertyType": "apartment", "status": "active", "monthlyRent": 1800,
+	}}}
+	output, err := executeCommandTable(t, jsonHandler(t, http.MethodGet, "/api/v1/properties", http.StatusOK, data), propertiesListCmd())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, want := range []string{"TITLE", "PROPERTY TYPE", "MONTHLY RENT", "Downtown Loft", "apartment", "1800"} {
+		if !strings.Contains(output, want) {
+			t.Errorf("output missing %q: %s", want, output)
+		}
 	}
 }
 
@@ -637,7 +909,7 @@ func TestRunConfigEdit_MissingFile(t *testing.T) {
 func TestContactsListCmd_TableOutput(t *testing.T) {
 	data := map[string]any{
 		"data": []any{
-			map[string]any{"id": "c1", "name": "Alice", "email": "alice@test.com", "phone": "555-0001", "type": "tenant"},
+			map[string]any{"id": "c1", "name": "Alice", "email": "alice@test.com", "phone": "555-0001", "role": "tenant"},
 		},
 	}
 	handler := jsonHandler(t, http.MethodGet, "/api/v1/contacts", http.StatusOK, data)
