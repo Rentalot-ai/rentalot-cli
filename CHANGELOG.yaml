@@ -1,6 +1,8 @@
 project: rentalot-cli
 versions:
-    unreleased:
+    unreleased: {}
+    0.2.0:
+        date: 2026-09-30
         changed:
             - Canonicalize property and contact CLI payloads and add trial quota recovery guidance
             - Add repeated propertyType and exact Studio filters to properties list

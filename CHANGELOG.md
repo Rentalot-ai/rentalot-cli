@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-30
+
 ### Changed
 
 - Canonicalize property and contact CLI payloads and add trial quota recovery guidance
@@ -64,6 +66,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial project scaffolding
 
-[Unreleased]: https://github.com/Rentalot-ai/rentalot-cli/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/Rentalot-ai/rentalot-cli/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Rentalot-ai/rentalot-cli/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/Rentalot-ai/rentalot-cli/compare/v0.1.0...v0.1.3
 [0.1.0]: https://github.com/Rentalot-ai/rentalot-cli/compare/v0.0.1...v0.1.0
