@@ -56,12 +56,13 @@ func propertiesListCmd() *cobra.Command {
 					str(m, "id"),
 					str(m, "title"),
 					str(m, "address"),
+					str(m, "unitNumber"),
 					str(m, "propertyType"),
 					str(m, "status"),
 					str(m, "monthlyRent"),
 				})
 			}
-			printTable([]string{"ID", "TITLE", "ADDRESS", "PROPERTY TYPE", "STATUS", "MONTHLY RENT"}, rows)
+			printTable([]string{"ID", "TITLE", "ADDRESS", "UNIT", "PROPERTY TYPE", "STATUS", "MONTHLY RENT"}, rows)
 			return nil
 		},
 	}
@@ -133,6 +134,7 @@ func propertiesGetCmd() *cobra.Command {
 type propertyFlags struct {
 	title, legacyName string
 	address           string
+	unitNumber        string
 	city              string
 	state             string
 	zip               string
@@ -211,6 +213,7 @@ func addPropertyFlags(cmd *cobra.Command, f *propertyFlags) {
 	flags.StringVar(&f.legacyName, "name", "", "deprecated alias for --title")
 	_ = flags.MarkDeprecated("name", "use --title instead")
 	flags.StringVar(&f.address, "address", "", "street address (required when creating)")
+	flags.StringVar(&f.unitNumber, "unit-number", "", "unit, apartment, or suite number (max 50 characters; empty clears; omit to parse address suffix)")
 	flags.StringVar(&f.city, "city", "", "city")
 	flags.StringVar(&f.state, "state", "", "state or province")
 	flags.StringVar(&f.zip, "zip", "", "ZIP or postal code")
@@ -253,6 +256,14 @@ func buildPropertyBody(cmd *cobra.Command, f *propertyFlags, creating bool) (map
 	}
 	if cmd.Flags().Changed("address") {
 		body["address"] = strings.TrimSpace(f.address)
+	}
+	if cmd.Flags().Changed("unit-number") {
+		unitNumber := strings.TrimSpace(f.unitNumber)
+		if unitNumber == "" {
+			body["unitNumber"] = nil
+		} else {
+			body["unitNumber"] = unitNumber
+		}
 	}
 	if cmd.Flags().Changed("city") && strings.TrimSpace(f.city) != "" {
 		body["city"] = strings.TrimSpace(f.city)

@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Canonicalize property and contact CLI payloads and add trial quota recovery guidance
 - Add repeated propertyType and exact Studio filters to properties list
 
+### Added
+
+- Property create and update support --unit-number, including clearing units; property lists display unit numbers, with building IDs available in get and JSON output.
+
 ## [0.1.3] - 2026-04-08
 
 ### Fixed
