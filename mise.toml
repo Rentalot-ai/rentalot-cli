@@ -1,0 +1,4 @@
+[tools]
+# Keep in sync with golangci-lint-action `version` in .github/workflows/ci.yml.
+# Must be built with a Go version >= the local toolchain to typecheck its stdlib.
+"aqua:golangci/golangci-lint" = "2.14.0"
