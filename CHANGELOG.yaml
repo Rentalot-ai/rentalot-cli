@@ -5,7 +5,7 @@ versions:
             - Canonicalize property and contact CLI payloads and add trial quota recovery guidance
             - Add repeated propertyType and exact Studio filters to properties list
         added:
-            - Property create and update support --unit-number, including clearing units; property lists display unit numbers and building IDs.
+            - Property create and update support --unit-number, including clearing units; property lists display unit numbers, with building IDs available in get and JSON output.
     0.1.3:
         date: 2026-04-08
         fixed:

@@ -57,13 +57,12 @@ func propertiesListCmd() *cobra.Command {
 					str(m, "title"),
 					str(m, "address"),
 					str(m, "unitNumber"),
-					str(m, "buildingId"),
 					str(m, "propertyType"),
 					str(m, "status"),
 					str(m, "monthlyRent"),
 				})
 			}
-			printTable([]string{"ID", "TITLE", "ADDRESS", "UNIT", "BUILDING ID", "PROPERTY TYPE", "STATUS", "MONTHLY RENT"}, rows)
+			printTable([]string{"ID", "TITLE", "ADDRESS", "UNIT", "PROPERTY TYPE", "STATUS", "MONTHLY RENT"}, rows)
 			return nil
 		},
 	}

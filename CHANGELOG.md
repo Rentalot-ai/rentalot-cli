@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- Property create and update support --unit-number, including clearing units; property lists display unit numbers and building IDs.
+- Property create and update support --unit-number, including clearing units; property lists display unit numbers, with building IDs available in get and JSON output.
 
 ## [0.1.3] - 2026-04-08
 

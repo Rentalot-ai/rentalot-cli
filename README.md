@@ -63,7 +63,7 @@ rentalot contacts create --name "Ada Lovelace" --email ada@example.com --role te
 rentalot contacts update "$CONTACT_ID" --role tenant
 ```
 
-Use `--unit-number "4B"` on create or update to set an explicit unit (maximum 50 characters). An empty or whitespace-only value sends `unitNumber: null` to clear it, including `rentalot properties update "$PROPERTY_ID" --unit-number ""`. When the flag is absent, the CLI omits `unitNumber`, allowing the server to parse a trailing `Unit`, `Apt`, `Suite`, or `#` suffix from the address. Property get output and JSON lists preserve `unitNumber` and the read-only, account-scoped `buildingId`; human-readable lists include Unit and Building ID columns, with blank cells for null values.
+Use `--unit-number "4B"` on create or update to set an explicit unit (maximum 50 characters). An empty or whitespace-only value sends `unitNumber: null` to clear it, including `rentalot properties update "$PROPERTY_ID" --unit-number ""`. When the flag is absent, the CLI omits `unitNumber`, allowing the server to parse a trailing `Unit`, `Apt`, `Suite`, or `#` suffix from the address. Property get output and JSON lists preserve `unitNumber` and the read-only, account-scoped `buildingId`; human-readable lists include a Unit column, with blank cells for null values. Building IDs remain available in get and JSON output rather than widening the human table.
 
 Property lists support repeated canonical type filters and the exact Studio filter from the v1 API:
 

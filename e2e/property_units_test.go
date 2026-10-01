@@ -79,15 +79,18 @@ func TestBinary_PropertiesList_UnitColumns(t *testing.T) {
 	if len(lines) != 5 {
 		t.Fatalf("expected header, separator and three property rows: %s", stdout)
 	}
-	if !strings.Contains(lines[0], "UNIT") || !strings.Contains(lines[0], "BUILDING ID") {
-		t.Fatalf("missing unit/building columns: %s", stdout)
+	if !strings.Contains(lines[0], "UNIT") {
+		t.Fatalf("missing unit column: %s", stdout)
 	}
 	for i, unit := range []string{"4B", "5C"} {
-		if !strings.Contains(lines[i+2], unit) || !strings.Contains(lines[i+2], "b1") {
+		if !strings.Contains(lines[i+2], unit) {
 			t.Errorf("unit %s missing or on wrong property row: %s", unit, lines[i+2])
 		}
 	}
 	if strings.Contains(lines[4], "<nil>") || strings.Contains(lines[4], "null") {
-		t.Errorf("null unit/building must render blank: %s", lines[4])
+		t.Errorf("null unit must render blank: %s", lines[4])
+	}
+	if strings.Contains(stdout, "BUILDING ID") || strings.Contains(stdout, "b1") {
+		t.Errorf("building IDs should remain in JSON output, not the human table: %s", stdout)
 	}
 }
