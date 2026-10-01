@@ -51,7 +51,7 @@ Trial limits are shared by the account across active keys and key rotation: 20 r
 
 ## Canonical property and contact writes
 
-Property create requires `--address`, `--monthly-rent`, `--bedrooms`, and `--bathrooms`. Optional canonical fields include `--title`, `--property-type`, `--status`, `--is-public`, `--city`, `--state`, `--zip`, and `--description`. Canonical property types are `house`, `apartment`, `condo`, `townhouse`, and `room`; a studio is represented by `--bedrooms 0`. For the development-only trial first job, omit `--property-type` because that field is separately feature-gated, and keep the write private.
+Property create requires `--address`, `--monthly-rent`, `--bedrooms`, and `--bathrooms`. Optional canonical fields include `--title`, `--unit-number`, `--property-type`, `--status`, `--is-public`, `--city`, `--state`, `--zip`, and `--description`. Canonical property types are `house`, `apartment`, `condo`, `townhouse`, and `room`; a studio is represented by `--bedrooms 0`. For the development-only trial first job, omit `--property-type` because that field is separately feature-gated, and keep the write private.
 
 ```bash
 rentalot properties create \
@@ -62,6 +62,8 @@ rentalot properties update "$PROPERTY_ID" --title "Downtown Loft Updated" --mont
 rentalot contacts create --name "Ada Lovelace" --email ada@example.com --role tenant
 rentalot contacts update "$CONTACT_ID" --role tenant
 ```
+
+Use `--unit-number "4B"` on create or update to set an explicit unit (maximum 50 characters). An empty or whitespace-only value sends `unitNumber: null` to clear it, including `rentalot properties update "$PROPERTY_ID" --unit-number ""`. When the flag is absent, the CLI omits `unitNumber`, allowing the server to parse a trailing `Unit`, `Apt`, `Suite`, or `#` suffix from the address. Property get output and JSON lists preserve `unitNumber` and the read-only, account-scoped `buildingId`; human-readable lists include Unit and Building ID columns, with blank cells for null values.
 
 Property lists support repeated canonical type filters and the exact Studio filter from the v1 API:
 

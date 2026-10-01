@@ -20,6 +20,8 @@ The v1 public property response omits internal ownership and lifecycle fields. E
 | id | string (uuid) | Yes | Unique property identifier |
 | title | string | Yes | Human-readable title; omitted create titles are derived from address |
 | address | string | Yes | Street address |
+| unitNumber | string or null | Yes | Unit/apartment/suite number |
+| buildingId | string (uuid) or null | Yes | Read-only account-scoped building grouping apartment/condo units |
 | city | string or null | Yes | City name |
 | state | string or null | Yes | State/province code |
 | zip | string or null | Yes | ZIP/postal code |
@@ -42,6 +44,7 @@ Required: `address`, `monthlyRent`, `bedrooms`, `bathrooms`
 |-------|------|-------------|
 | title | string | Optional human-readable title |
 | address | string | Street address |
+| unitNumber | string or null | Optional unit number (max 50 characters); null or blank clears; omission lets the server parse a trailing Unit/Apt/Suite/# address suffix |
 | city | string | City |
 | state | string | State/province |
 | zip | string | ZIP/postal code |
@@ -60,6 +63,8 @@ The general v1 schema accepts canonical `propertyType` values when the server-si
 ## UpdatePropertyRequest
 
 Same canonical fields as `CreatePropertyRequest`, all optional. Send only fields to change. Use `title`, `propertyType`, and `monthlyRent`, never legacy `name`, `type`, or `rent` JSON keys.
+
+The CLI exposes `unitNumber` as `--unit-number` on create and update. An empty or whitespace-only value sends null; an absent flag omits the field. `buildingId` is response-only and cannot be set.
 
 ## Property list filters
 
