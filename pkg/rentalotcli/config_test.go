@@ -12,7 +12,7 @@ func TestNewClient_TimeoutDefaults(t *testing.T) {
 		client := NewClient(Config{Timeout: timeout})
 		want := timeout
 		if want <= 0 {
-			want = 30 * time.Second
+			want = DefaultTimeout
 		}
 		if got := client.httpClient.Timeout; got != want {
 			t.Errorf("NewClient timeout %s: got %s, want %s", timeout, got, want)

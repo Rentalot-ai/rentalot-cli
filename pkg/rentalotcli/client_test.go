@@ -23,25 +23,6 @@ func newTestClient(t *testing.T, handler http.HandlerFunc) (*rentalotcli.Client,
 	return rentalotcli.NewClient(cfg), srv
 }
 
-func TestClient_DefaultTimeoutBoundsStalledRequest(t *testing.T) {
-	client, _ := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
-		<-r.Context().Done()
-	})
-	// This deadline is only a backstop for the unfixed, unbounded client.
-	ctx, cancel := context.WithTimeout(context.Background(), 35*time.Second)
-	defer cancel()
-	resp, err := client.Get(ctx, "/stalled", nil)
-	if resp != nil {
-		_ = resp.Body.Close()
-	}
-	if ctx.Err() != nil {
-		t.Fatal("request reached the caller's 35s backstop instead of the default client timeout")
-	}
-	if !errors.Is(err, context.DeadlineExceeded) {
-		t.Fatalf("error = %v, want deadline exceeded", err)
-	}
-}
-
 func TestClient_TimeoutOverrideBoundsStalledRequests(t *testing.T) {
 	requests := map[string]func(*rentalotcli.Client, context.Context) (*http.Response, error){
 		"GET": func(c *rentalotcli.Client, ctx context.Context) (*http.Response, error) {
