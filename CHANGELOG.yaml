@@ -1,6 +1,8 @@
 project: rentalot-cli
 versions:
-    unreleased: {}
+    unreleased:
+        fixed:
+            - Bound HTTP requests to 30 seconds, including response-body reads, with a positive --timeout duration override.
     0.2.0:
         date: 2026-09-30
         changed:

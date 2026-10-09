@@ -4,7 +4,21 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
+
+func TestNewClient_TimeoutDefaults(t *testing.T) {
+	for _, timeout := range []time.Duration{0, -time.Second, time.Minute} {
+		client := NewClient(Config{Timeout: timeout})
+		want := timeout
+		if want <= 0 {
+			want = 30 * time.Second
+		}
+		if got := client.httpClient.Timeout; got != want {
+			t.Errorf("NewClient timeout %s: got %s, want %s", timeout, got, want)
+		}
+	}
+}
 
 func TestLoadConfig_Missing(t *testing.T) {
 	cfg, err := LoadConfig("/nonexistent/rentalot/config.yaml")

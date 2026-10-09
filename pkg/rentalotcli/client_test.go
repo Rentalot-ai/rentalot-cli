@@ -3,12 +3,14 @@ package rentalotcli_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Rentalot-ai/rentalot-cli/pkg/rentalotcli"
 )
@@ -19,6 +21,103 @@ func newTestClient(t *testing.T, handler http.HandlerFunc) (*rentalotcli.Client,
 	t.Cleanup(srv.Close)
 	cfg := rentalotcli.Config{APIKey: "test-key", BaseURL: srv.URL}
 	return rentalotcli.NewClient(cfg), srv
+}
+
+func TestClient_DefaultTimeoutBoundsStalledRequest(t *testing.T) {
+	client, _ := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+	})
+	// This deadline is only a backstop for the unfixed, unbounded client.
+	ctx, cancel := context.WithTimeout(context.Background(), 35*time.Second)
+	defer cancel()
+	resp, err := client.Get(ctx, "/stalled", nil)
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
+	if ctx.Err() != nil {
+		t.Fatal("request reached the caller's 35s backstop instead of the default client timeout")
+	}
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("error = %v, want deadline exceeded", err)
+	}
+}
+
+func TestClient_TimeoutOverrideBoundsStalledRequests(t *testing.T) {
+	requests := map[string]func(*rentalotcli.Client, context.Context) (*http.Response, error){
+		"GET": func(c *rentalotcli.Client, ctx context.Context) (*http.Response, error) {
+			return c.Get(ctx, "/stalled", nil)
+		},
+		"POST": func(c *rentalotcli.Client, ctx context.Context) (*http.Response, error) {
+			return c.Post(ctx, "/stalled", map[string]string{"name": "test"})
+		},
+		"PATCH": func(c *rentalotcli.Client, ctx context.Context) (*http.Response, error) {
+			return c.Patch(ctx, "/stalled", map[string]string{"name": "test"})
+		},
+		"DELETE": func(c *rentalotcli.Client, ctx context.Context) (*http.Response, error) {
+			return c.Delete(ctx, "/stalled")
+		},
+	}
+	for method, request := range requests {
+		t.Run(method, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, _ = io.Copy(io.Discard, r.Body)
+				<-r.Context().Done()
+			}))
+			defer srv.Close()
+			client := rentalotcli.NewClient(rentalotcli.Config{BaseURL: srv.URL, Timeout: 50 * time.Millisecond})
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+			resp, err := request(client, ctx)
+			if resp != nil {
+				_ = resp.Body.Close()
+			}
+			if ctx.Err() != nil {
+				t.Fatal("request reached the caller backstop instead of the configured timeout")
+			}
+			if !errors.Is(err, context.DeadlineExceeded) {
+				t.Fatalf("error = %v, want deadline exceeded", err)
+			}
+		})
+	}
+}
+
+func TestClient_TimeoutBoundsStalledResponseBody(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.(http.Flusher).Flush()
+		<-r.Context().Done()
+	}))
+	defer srv.Close()
+	client := rentalotcli.NewClient(rentalotcli.Config{BaseURL: srv.URL, Timeout: 100 * time.Millisecond})
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	resp, err := client.Get(ctx, "/stalled-body", nil)
+	if err != nil {
+		t.Fatalf("receiving headers: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	_, err = io.ReadAll(resp.Body)
+	if ctx.Err() != nil {
+		t.Fatal("body read reached the caller backstop instead of the configured timeout")
+	}
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("body read error = %v, want deadline exceeded", err)
+	}
+}
+
+func TestClient_PreservesEarlierContextDeadline(t *testing.T) {
+	client, _ := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+	})
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+	resp, err := client.Get(ctx, "/stalled", nil)
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
+	if !errors.Is(ctx.Err(), context.DeadlineExceeded) || !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("request error = %v, context error = %v; want caller deadline exceeded", err, ctx.Err())
+	}
 }
 
 func TestGet_InjectsAuthHeader(t *testing.T) {

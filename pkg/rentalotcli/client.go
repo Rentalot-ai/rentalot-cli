@@ -8,7 +8,11 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
+
+// DefaultTimeout bounds the entire HTTP request, including response-body reads.
+const DefaultTimeout = 30 * time.Second
 
 // APIError represents an error returned by the Rentalot API.
 type APIError struct {
@@ -57,10 +61,14 @@ type Client struct {
 
 // NewClient creates a new API client from the given config.
 func NewClient(cfg Config) *Client {
+	timeout := cfg.Timeout
+	if timeout <= 0 {
+		timeout = DefaultTimeout
+	}
 	return &Client{
 		baseURL:    strings.TrimRight(cfg.BaseURL, "/"),
 		apiKey:     cfg.APIKey,
-		httpClient: &http.Client{},
+		httpClient: &http.Client{Timeout: timeout},
 	}
 }
 

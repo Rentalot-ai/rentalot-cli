@@ -35,6 +35,14 @@ make build    # Binary at bin/rentalot
 rentalot --help
 ```
 
+HTTP requests time out after **30 seconds**, including connection setup, redirects, and response-body reads. Override the limit per invocation with a positive Go duration:
+
+```bash
+rentalot --timeout 2m properties list
+```
+
+Zero, negative, and invalid durations are rejected. Each request gets its own limit; this does not limit the total duration of commands that make multiple requests. Timeouts do not trigger automatic retries. Library callers can set `Config.Timeout`; omitted or nonpositive values use the 30-second default, and an earlier context deadline still takes precedence.
+
 ## API setup and trial preview
 
 Configure the server origin, not `/api/v1`, and use the same origin for account sign-in, API-key issuance, CLI requests, and CRM read-back:

@@ -109,7 +109,10 @@ rentalot-cli settings followups update
 --json      # Machine-readable JSON output
 --limit N   # Max results per page
 --page N    # Page number
+--timeout 2m # Total HTTP request limit (default 30s; must be positive)
 ```
+
+The timeout covers connection setup, redirects, and response-body reads for each request, not the whole multi-request command. A timeout does not trigger an automatic retry.
 
 ## Canonical first CRM job
 

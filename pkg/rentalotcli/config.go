@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -15,6 +16,9 @@ const defaultBaseURL = "https://rentalot.ai"
 type Config struct {
 	APIKey  string `yaml:"api_key,omitempty"`
 	BaseURL string `yaml:"base_url,omitempty"`
+	// Timeout is a runtime-only total HTTP request limit. Nonpositive values
+	// use DefaultTimeout; the CLI overrides it with --timeout.
+	Timeout time.Duration `yaml:"-"`
 }
 
 // ConfigPath returns the default config file path: ~/.config/rentalot/config.yaml.
