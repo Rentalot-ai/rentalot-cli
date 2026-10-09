@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-09
+
 ### Fixed
 
 - Bound HTTP requests to 30 seconds, including response-body reads, with a positive --timeout duration override.
@@ -70,7 +72,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial project scaffolding
 
-[Unreleased]: https://github.com/Rentalot-ai/rentalot-cli/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Rentalot-ai/rentalot-cli/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/Rentalot-ai/rentalot-cli/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Rentalot-ai/rentalot-cli/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/Rentalot-ai/rentalot-cli/compare/v0.1.0...v0.1.3
 [0.1.0]: https://github.com/Rentalot-ai/rentalot-cli/compare/v0.0.1...v0.1.0
