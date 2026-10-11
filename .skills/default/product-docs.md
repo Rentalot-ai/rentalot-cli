@@ -36,7 +36,7 @@ Most important part of listing. AI agent references photos when answering questi
 
 **Upload:** Drag and drop or browse. Background upload. Must save property first.
 
-**Formats:** JPEG, PNG, WebP, HEIC. Max 10 MB per image. Auto-converted to JPEG.
+**v1 API upload formats:** JPEG, PNG, WebP. Max 10 MB per image. HEIC is unsupported; convert it before uploading. Confirmation checks actual image bytes and screens for NSFW content. A rejection returns HTTP 422 and deletes the rejected upload; use a suitable replacement and start a new presign/upload.
 
 **Auto-optimization:**
 - Resized to max 2000px longest side

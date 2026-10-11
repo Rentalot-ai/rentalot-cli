@@ -58,6 +58,10 @@ rentalot-cli properties get <id>
 rentalot-cli properties create              # --address --monthly-rent --bedrooms --bathrooms
 rentalot-cli properties update <id>         # --title --monthly-rent --property-type, etc.
 rentalot-cli properties delete <id>
+rentalot properties images presign <id>    # --file-name --content-type --size-bytes
+rentalot properties images confirm <id>    # --r2-key --content-type --size-bytes [--alt-text]
+rentalot properties images presign-batch <id> # --file presign.json ({"images": [...]})
+rentalot properties images confirm-batch <id> # --file confirm.json ({"images": [...]})
 
 # Contacts
 rentalot-cli contacts list
@@ -102,6 +106,8 @@ rentalot-cli sessions review <id>          # --status approved|denied --notes
 rentalot-cli settings followups get
 rentalot-cli settings followups update
 ```
+
+Image commands send upload metadata; upload the image bytes to the returned presigned URL before confirmation. Supported MIME types are `image/jpeg`, `image/png`, and `image/webp`, up to 10 MB. HEIC must be converted first. Confirm and confirm-batch screen the actual bytes for valid images and NSFW content; HTTP 422 means the rejected upload was deleted. The CLI preserves the server reason and reports that a suitable replacement needs a new presign/upload, with no automatic retry.
 
 ## Global Flags
 

@@ -86,6 +86,25 @@ Older `--name`, `--type`, and `--rent` property flags, plus contact `--type`, ar
 
 Use `--json` to preserve the API response envelope. A `401` means the key is missing, expired, or revoked, so configure an active key at the same origin. A `429` with `Retry-After` is a timed server instruction; the CLI reports it and does not retry automatically because attempts consume quota. A trial lifetime exhaustion response has no timed retry; upgrade to continue, and do not rotate keys to bypass account-wide limits.
 
+## Property image uploads
+
+The v1 image API accepts `image/jpeg`, `image/png`, and `image/webp`, up to 10 MB per image. Convert HEIC to one of these formats before uploading.
+
+```bash
+rentalot properties images presign "$PROPERTY_ID" \
+  --file-name living-room.jpg --content-type image/jpeg --size-bytes 123456
+# Upload the file bytes to the returned presigned URL, then confirm its r2Key:
+rentalot properties images confirm "$PROPERTY_ID" \
+  --r2-key "$R2_KEY" --content-type image/jpeg --size-bytes 123456 \
+  --alt-text "Living room"
+rentalot properties images presign-batch "$PROPERTY_ID" --file presign.json
+rentalot properties images confirm-batch "$PROPERTY_ID" --file confirm.json
+```
+
+These commands send metadata and print the API response; upload the bytes to the returned URL separately. Batch files contain `{"images": [...]}` with the same camelCase fields: `fileName`, `contentType`, and `sizeBytes` for presign (at most 20 images), or `r2Key`, `contentType`, `sizeBytes`, and optional `altText` for confirm.
+
+Confirm and confirm-batch validate the uploaded bytes as a real JPEG, PNG, or WebP and screen for NSFW content. A rejection returns **HTTP 422** and the server deletes the rejected upload. The CLI preserves the API's rejection reason and reports the deletion. Use a suitable replacement image and start a new presign/upload rather than confirming the deleted key again. After a failed batch, do not assume other images were confirmed. Byte validation and NSFW screening remain server-owned.
+
 ## Library Usage
 
 ```go
