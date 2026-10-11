@@ -105,6 +105,7 @@ rentalot-cli sessions review <id>          # --status approved|denied --notes
 # Settings
 rentalot-cli settings get                  # --json preserves nullable businessName
 rentalot-cli settings update               # --business-name (max 100; empty clears)
+rentalot-cli settings update --daily-leasing-brief-enabled=true --daily-leasing-brief-no-activity-enabled=false
 ```
 
 Settings updates send `businessName` only when `--business-name` is supplied.

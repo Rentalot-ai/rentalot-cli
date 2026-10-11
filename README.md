@@ -99,6 +99,16 @@ Older `--name`, `--type`, and `--rent` property flags, plus contact `--type`, ar
 
 Use `--json` to preserve the API response envelope. A `401` means the key is missing, expired, or revoked, so configure an active key at the same origin. A `429` with `Retry-After` is a timed server instruction; the CLI reports it and does not retry automatically because attempts consume quota. A trial lifetime exhaustion response has no timed retry; upgrade to continue, and do not rotate keys to bypass account-wide limits.
 
+## Daily leasing brief settings
+
+```bash
+rentalot settings get --json
+rentalot settings update --daily-leasing-brief-enabled=true
+rentalot settings update --daily-leasing-brief-no-activity-enabled=false
+```
+
+The update flags send `dailyLeasingBriefEnabled` and `dailyLeasingBriefNoActivityEnabled` as booleans inside `emailPreferences`. Use `=false` to disable either preference. Only supplied flags are sent; omitted preferences stay absent from the request. Both flags can be used together or alongside the business-name and followup flags.
+
 ## Business name
 
 To read or change the account business name:

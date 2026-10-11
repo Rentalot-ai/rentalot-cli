@@ -58,6 +58,7 @@ func settingsUpdateCmd() *cobra.Command {
 	var businessName string
 	var followupEnabled string
 	var followupDelay int
+	var dailyLeasingBriefEnabled, dailyLeasingBriefNoActivityEnabled bool
 	cmd := &cobra.Command{
 		Use:   "update",
 		Short: "Update account settings",
@@ -75,8 +76,18 @@ func settingsUpdateCmd() *cobra.Command {
 			if cmd.Flags().Changed("followup-delay") {
 				body["followup_delay_hours"] = followupDelay
 			}
+			emailPreferences := map[string]any{}
+			if cmd.Flags().Changed("daily-leasing-brief-enabled") {
+				emailPreferences["dailyLeasingBriefEnabled"] = dailyLeasingBriefEnabled
+			}
+			if cmd.Flags().Changed("daily-leasing-brief-no-activity-enabled") {
+				emailPreferences["dailyLeasingBriefNoActivityEnabled"] = dailyLeasingBriefNoActivityEnabled
+			}
+			if len(emailPreferences) > 0 {
+				body["emailPreferences"] = emailPreferences
+			}
 			if len(body) == 0 {
-				return fmt.Errorf("no settings specified — use --business-name, --followup-enabled or --followup-delay")
+				return fmt.Errorf("no settings specified — use --business-name, --followup-enabled, --followup-delay, --daily-leasing-brief-enabled or --daily-leasing-brief-no-activity-enabled")
 			}
 			client := clientFromContext(cmd)
 			resp, err := client.Patch(cmd.Context(), "/api/v1/settings", body)
@@ -93,5 +104,7 @@ func settingsUpdateCmd() *cobra.Command {
 	cmd.Flags().StringVar(&businessName, "business-name", "", "business name (max 100 characters; empty clears)")
 	cmd.Flags().StringVar(&followupEnabled, "followup-enabled", "", "enable followup messages (true/false)")
 	cmd.Flags().IntVar(&followupDelay, "followup-delay", 0, "followup delay in hours")
+	cmd.Flags().BoolVar(&dailyLeasingBriefEnabled, "daily-leasing-brief-enabled", false, "enable daily leasing brief emails (use =false to disable)")
+	cmd.Flags().BoolVar(&dailyLeasingBriefNoActivityEnabled, "daily-leasing-brief-no-activity-enabled", false, "enable daily leasing brief emails when there is no activity (use =false to disable)")
 	return cmd
 }
