@@ -1,0 +1,20 @@
+rentalot properties list — List properties
+
+Usage:
+  rentalot properties list [flags]
+
+Flags:
+      --bedroom-type string  filter by bedroom type (only studio; studios have zero bedrooms)
+      --filter string  filter as key=value (e.g. status=active)
+  -h, --help  help for list
+      --limit int  max results to return
+      --output string  output format: table or json (--json also selects JSON) (default "table")
+      --page int  page number (1-based)
+      --property-type stringArray  filter by canonical property type (repeat for multiple)
+
+Global Flags:
+      --config string  config file (default "<CONFIG_FILE>")
+      --json  output as JSON
+      --no-color  disable colored output
+      --timeout duration  HTTP request timeout, including response body (must be positive) (default 30s)
+

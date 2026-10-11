@@ -1,0 +1,44 @@
+{
+  "data": [
+    {
+      "id": "51e08051-d339-4058-b8b3-00aeea21b022",
+      "title": "Oak Apartments",
+      "address": "123 Oak St",
+      "unitNumber": "2B",
+      "buildingId": "989a2701-d8e6-48c9-b0fc-22a35b4e822a",
+      "city": "Austin",
+      "state": "TX",
+      "zip": "78701",
+      "monthlyRent": 1500,
+      "bedrooms": 0,
+      "propertyType": "apartment",
+      "bathrooms": 1,
+      "features": ["parking", "laundry"],
+      "status": "active",
+      "availabilityDate": "2026-10-01",
+      "description": "Sunny studio",
+      "createdAt": "2026-09-01T12:00:00Z",
+      "updatedAt": "2026-09-02T12:00:00Z"
+    },
+    {
+      "id": "9e99e948-e4f9-499e-a4a8-ef2b45209f47",
+      "title": "Legacy Cottage",
+      "address": "456 Pine Ave",
+      "unitNumber": null,
+      "buildingId": null,
+      "city": null,
+      "state": null,
+      "zip": null,
+      "monthlyRent": 2100,
+      "bedrooms": 2,
+      "propertyType": null,
+      "bathrooms": 1.5,
+      "features": [],
+      "status": "rented",
+      "availabilityDate": null,
+      "description": null,
+      "createdAt": "2026-08-01T12:00:00Z",
+      "updatedAt": "2026-09-02T12:00:00Z"
+    }
+  ]
+}

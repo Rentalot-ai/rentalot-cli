@@ -1,0 +1,26 @@
+rentalot contacts create — Create a contact with canonical API fields
+
+Create a contact with canonical v1 fields. Single creates require --name and at least one of --email or --phone.
+
+Usage:
+  rentalot contacts create [flags]
+
+Flags:
+      --channel-preference string  preferred messaging channel
+      --email string  email address
+  -h, --help  help for create
+      --language string  ISO 639-1 language code
+      --name string  contact name (required when creating)
+      --notes string  contact notes (update only)
+      --phone string  phone number
+      --referral-source string  referral source
+      --role string  role: prospect, tenant, landlord, property_manager, vendor, other
+      --source string  contact acquisition source
+      --status string  status: prospect, scheduled, applicant, renter, archived
+
+Global Flags:
+      --config string  config file (default "<CONFIG_FILE>")
+      --json  output as JSON
+      --no-color  disable colored output
+      --timeout duration  HTTP request timeout, including response body (must be positive) (default 30s)
+
