@@ -86,6 +86,19 @@ Older `--name`, `--type`, and `--rent` property flags, plus contact `--type`, ar
 
 Use `--json` to preserve the API response envelope. A `401` means the key is missing, expired, or revoked, so configure an active key at the same origin. A `429` with `Retry-After` is a timed server instruction; the CLI reports it and does not retry automatically because attempts consume quota. A trial lifetime exhaustion response has no timed retry; upgrade to continue, and do not rotate keys to bypass account-wide limits.
 
+## Business name
+
+To read or change the account business name:
+
+```bash
+rentalot settings get --json
+rentalot settings update --business-name "Cedar Rentals"
+rentalot settings update --business-name "" # Clear the business name
+```
+
+Business names allow up to 100 characters. Omitting `--business-name` leaves the
+name unchanged; JSON output preserves a nullable `businessName` response.
+
 ## Library Usage
 
 ```go

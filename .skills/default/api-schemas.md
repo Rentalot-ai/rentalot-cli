@@ -455,6 +455,7 @@ Optional: `reviewNotes` (max 2000 chars)
 | Field | Type | Description |
 |-------|------|-------------|
 | agentName | string | AI agent display name |
+| businessName | string or null | Optional business name, max 100 characters; an empty string clears it |
 | customInstructions | string | Custom system prompt |
 | timezone | string | IANA timezone |
 | workingHours | WorkingHours | `{ start, end, days }` |
@@ -480,6 +481,12 @@ Optional: `reviewNotes` (max 2000 chars)
 | callHumanEnabled | boolean | |
 | followupTemplates | array[object] | `[{ step: 1, template: "..." }]` — placeholders: `{contactName}`, `{agentName}`, `{propertyAddress}` |
 | emailPreferences | EmailPreferences | |
+
+`GET /api/v1/settings` may return `businessName` as a string or null. In
+`PATCH /api/v1/settings`, `businessName` is optional and nullable; omit it to
+leave the name unchanged, or send an empty string to clear it. The CLI exposes
+this field as `settings update --business-name "Cedar Rentals"`; use
+`--business-name ""` to clear it. JSON output preserves null responses.
 
 ## WorkingHours
 

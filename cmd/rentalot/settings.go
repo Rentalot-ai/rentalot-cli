@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"unicode/utf8"
 
 	"github.com/spf13/cobra"
 )
@@ -54,13 +55,20 @@ func settingsGetCmd() *cobra.Command {
 }
 
 func settingsUpdateCmd() *cobra.Command {
+	var businessName string
 	var followupEnabled string
 	var followupDelay int
 	cmd := &cobra.Command{
 		Use:   "update",
-		Short: "Update followup settings",
+		Short: "Update account settings",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			body := map[string]any{}
+			if cmd.Flags().Changed("business-name") {
+				if utf8.RuneCountInString(businessName) > 100 {
+					return fmt.Errorf("--business-name must be at most 100 characters")
+				}
+				body["businessName"] = businessName
+			}
 			if cmd.Flags().Changed("followup-enabled") {
 				body["followup_enabled"] = followupEnabled == "true"
 			}
@@ -68,7 +76,7 @@ func settingsUpdateCmd() *cobra.Command {
 				body["followup_delay_hours"] = followupDelay
 			}
 			if len(body) == 0 {
-				return fmt.Errorf("no settings specified — use --followup-enabled or --followup-delay")
+				return fmt.Errorf("no settings specified — use --business-name, --followup-enabled or --followup-delay")
 			}
 			client := clientFromContext(cmd)
 			resp, err := client.Patch(cmd.Context(), "/api/v1/settings", body)
@@ -82,6 +90,7 @@ func settingsUpdateCmd() *cobra.Command {
 			return printRawJSON(resp.Body)
 		},
 	}
+	cmd.Flags().StringVar(&businessName, "business-name", "", "business name (max 100 characters; empty clears)")
 	cmd.Flags().StringVar(&followupEnabled, "followup-enabled", "", "enable followup messages (true/false)")
 	cmd.Flags().IntVar(&followupDelay, "followup-delay", 0, "followup delay in hours")
 	return cmd
