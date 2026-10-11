@@ -143,7 +143,61 @@ Confirm and confirm-batch validate the uploaded bytes as a real JPEG, PNG, or We
 
 ```go
 import "github.com/Rentalot-ai/rentalot-cli/pkg/rentalotcli"
+
+type Contact struct {
+    ID   string `json:"id"`
+    Name string `json:"name"`
+}
+
+client := rentalotcli.NewClient(cfg) // cfg is a rentalotcli.Config
+resp, err := client.Get(ctx, "/api/v1/contacts/c1", nil)
+if err != nil {
+    return err
+}
+result, err := rentalotcli.DecodeResponse[rentalotcli.DataResponse[Contact]](resp)
+if err != nil {
+    return err
+}
+fmt.Println(result.Data.Name)
 ```
+
+`DecodeResponse[T]` accepts any JSON response type, closes the body on success or failure, and returns `*APIError` for non-2xx statuses (inspect with `errors.As`). Use `DataResponse[T]` for the v1 `data` envelope, or your own type to retain other fields. Empty 204/205 responses return a zero value; other empty bodies, malformed JSON, type mismatches, and trailing JSON values return errors. Raw `Get`, `Post`, `Patch`, and `Delete` still leave body ownership to the caller until passed to `DecodeResponse`.
+
+The library provides explicit pagination types; it does not fetch additional pages or retry automatically. For cursor pagination:
+
+```go
+current := rentalotcli.CursorParams{Limit: 50}
+for {
+    params, err := current.QueryParams()
+    if err != nil {
+        return err
+    }
+    params["status"] = "prospect" // reapply endpoint filters on every request
+    resp, err := client.Get(ctx, "/api/v1/contacts", params)
+    if err != nil {
+        return err
+    }
+    page, err := rentalotcli.DecodeResponse[rentalotcli.CursorPage[Contact]](resp)
+    if err != nil {
+        return err
+    }
+    for _, contact := range page.Data {
+        fmt.Println(contact.Name)
+    }
+    next, more, err := page.Next(current)
+    if err != nil {
+        return err
+    }
+    if !more {
+        break
+    }
+    current = next
+}
+```
+
+The vendored schema does not specify pagination metadata. These helpers assume `{"data": [...], "pagination": {...}}`: `CursorPage[T]` reads camelCase `nextCursor` and optional `hasMore`; `OffsetPage[T]` reads `limit`, `offset`, and optional `total`. Choose the type matching the endpoint's response, or define a custom type for a different shape. Cursor tokens are opaque; `Get` URL-encodes them. A missing/null/empty cursor or explicit `hasMore: false` ends cursor traversal, and an unchanged cursor or `hasMore: true` without a cursor returns an error.
+
+For offset pagination, start with `OffsetParams{Limit: 50}` and use `DecodeResponse[OffsetPage[Contact]]`; call `page.Next()` to obtain the next `OffsetParams`. Its `QueryParams()` sends `offset=0` for the first page. `Next()` uses the server's effective limit, advances by the returned item count, and stops at `total`; without a total, a short page ends traversal. Empty pages always stop. Negative metadata, invalid limits, and offset overflow return errors. A zero requested limit in either mode uses the server default.
 
 ### AI Agent Skill
 
