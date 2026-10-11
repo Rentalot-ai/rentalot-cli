@@ -1,0 +1,48 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Rentalot v1 property description contract excerpt",
+    "version": "rentalot-x9dy",
+    "description": "Offline excerpt derived from the rentalot-x9dy contract and bundled API schema reference. Only the changed request field is included; this is not a full server schema snapshot. Error examples illustrate the two response shapes supported by the CLI."
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "CreatePropertyRequest": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Descriptions must not contain phone numbers, email addresses, or website links; use the listing contact form."
+          }
+        }
+      },
+      "UpdatePropertyRequest": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Descriptions must not contain phone numbers, email addresses, or website links; use the listing contact form."
+          }
+        }
+      }
+    },
+    "examples": {
+      "ValidationEnvelope": {
+        "value": {
+          "error": {
+            "code": "validation_error",
+            "message": "Descriptions must not contain phone numbers, email addresses, or website links; use the listing contact form."
+          }
+        }
+      },
+      "ValidationProblem": {
+        "value": {
+          "type": "urn:problem:validation",
+          "status": 400,
+          "detail": "Descriptions must not contain phone numbers, email addresses, or website links; use the listing contact form."
+        }
+      }
+    }
+  }
+}
