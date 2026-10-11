@@ -103,6 +103,8 @@ rentalot-cli settings followups get
 rentalot-cli settings followups update
 ```
 
+The `properties list`, `contacts list`, `showings list`, and `conversations list` commands accept `--output json` to preserve the full API response envelope and pagination metadata. They default to `--output table`. Other formats are rejected; global `--json` still selects JSON even with `--output table`.
+
 ## Global Flags
 
 ```bash

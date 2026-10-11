@@ -43,6 +43,17 @@ rentalot --timeout 2m properties list
 
 Zero, negative, and invalid durations are rejected. Each request gets its own limit; this does not limit the total duration of commands that make multiple requests. Timeouts do not trigger automatic retries. Library callers can set `Config.Timeout`; omitted or nonpositive values use the 30-second default, and an earlier context deadline still takes precedence.
 
+The `properties list`, `contacts list`, `showings list`, and `conversations list` commands accept `--output json` for scripts:
+
+```bash
+rentalot properties list --output json --limit 20 --page 2
+rentalot contacts list --output json
+rentalot showings list --output json --property-id "$PROPERTY_ID"
+rentalot conversations list --output json --contact-id "$CONTACT_ID"
+```
+
+JSON output preserves the API response envelope, including pagination metadata and fields omitted from the table. These commands default to `--output table`; other format values are rejected. The existing global `--json` flag still selects JSON, including when combined with `--output table`.
+
 ## API setup and trial preview
 
 Configure the server origin, not `/api/v1`, and use the same origin for account sign-in, API-key issuance, CLI requests, and CRM read-back:
