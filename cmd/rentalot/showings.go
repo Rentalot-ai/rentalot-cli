@@ -26,10 +26,15 @@ func init() {
 func showingsListCmd() *cobra.Command {
 	var f listFlags
 	var propertyID, contactID string
+	var output listOutputFlags
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List showings",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			useJSON, err := output.useJSON()
+			if err != nil {
+				return err
+			}
 			params := f.toQueryParams()
 			if propertyID != "" {
 				params["property_id"] = propertyID
@@ -46,7 +51,7 @@ func showingsListCmd() *cobra.Command {
 			if resp.StatusCode >= 400 {
 				return fmt.Errorf("listing showings: %w", decodeAPIError(resp))
 			}
-			if jsonOutput {
+			if useJSON {
 				return printRawJSON(resp.Body)
 			}
 			var raw any
@@ -67,6 +72,7 @@ func showingsListCmd() *cobra.Command {
 	addListFlags(cmd, &f)
 	cmd.Flags().StringVar(&propertyID, "property-id", "", "filter by property ID")
 	cmd.Flags().StringVar(&contactID, "contact-id", "", "filter by contact ID")
+	addListOutputFlags(cmd, &output)
 	return cmd
 }
 

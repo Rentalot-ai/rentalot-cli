@@ -23,10 +23,15 @@ func init() {
 func conversationsListCmd() *cobra.Command {
 	var f listFlags
 	var contactID string
+	var output listOutputFlags
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List conversations",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			useJSON, err := output.useJSON()
+			if err != nil {
+				return err
+			}
 			params := f.toQueryParams()
 			if contactID != "" {
 				params["contact_id"] = contactID
@@ -40,7 +45,7 @@ func conversationsListCmd() *cobra.Command {
 			if resp.StatusCode >= 400 {
 				return fmt.Errorf("listing conversations: %w", decodeAPIError(resp))
 			}
-			if jsonOutput {
+			if useJSON {
 				return printRawJSON(resp.Body)
 			}
 			var raw any
@@ -60,6 +65,7 @@ func conversationsListCmd() *cobra.Command {
 	}
 	addListFlags(cmd, &f)
 	cmd.Flags().StringVar(&contactID, "contact-id", "", "filter by contact ID")
+	addListOutputFlags(cmd, &output)
 	return cmd
 }
 

@@ -10,12 +10,33 @@ import (
 	"text/tabwriter"
 
 	"github.com/Rentalot-ai/rentalot-cli/pkg/rentalotcli"
+	"github.com/spf13/cobra"
 )
 
 var jsonOutput bool
 
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "output as JSON")
+}
+
+// listOutputFlags selects the presentation of a list response.
+type listOutputFlags struct {
+	format string
+}
+
+func addListOutputFlags(cmd *cobra.Command, f *listOutputFlags) {
+	cmd.Flags().StringVar(&f.format, "output", "table", "output format: table or json (--json also selects JSON)")
+}
+
+func (f *listOutputFlags) useJSON() (bool, error) {
+	switch f.format {
+	case "table":
+		return jsonOutput, nil
+	case "json":
+		return true, nil
+	default:
+		return false, fmt.Errorf("invalid --output %q; use table or json", f.format)
+	}
 }
 
 // printRawJSON pretty-prints the JSON from the given reader to stdout.

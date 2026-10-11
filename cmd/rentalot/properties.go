@@ -26,10 +26,15 @@ func init() {
 
 func propertiesListCmd() *cobra.Command {
 	var f propertyListFlags
+	var output listOutputFlags
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List properties",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			useJSON, err := output.useJSON()
+			if err != nil {
+				return err
+			}
 			client := clientFromContext(cmd)
 			path, err := f.requestPath()
 			if err != nil {
@@ -43,7 +48,7 @@ func propertiesListCmd() *cobra.Command {
 			if resp.StatusCode >= 400 {
 				return fmt.Errorf("listing properties: %w", decodeAPIError(resp))
 			}
-			if jsonOutput {
+			if useJSON {
 				return printRawJSON(resp.Body)
 			}
 			var raw any
@@ -67,6 +72,7 @@ func propertiesListCmd() *cobra.Command {
 		},
 	}
 	addPropertyListFlags(cmd, &f)
+	addListOutputFlags(cmd, &output)
 	return cmd
 }
 

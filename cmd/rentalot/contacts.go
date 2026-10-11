@@ -25,10 +25,15 @@ func init() {
 
 func contactsListCmd() *cobra.Command {
 	var f listFlags
+	var output listOutputFlags
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List contacts",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			useJSON, err := output.useJSON()
+			if err != nil {
+				return err
+			}
 			client := clientFromContext(cmd)
 			resp, err := client.Get(cmd.Context(), "/api/v1/contacts", f.toQueryParams())
 			if err != nil {
@@ -38,7 +43,7 @@ func contactsListCmd() *cobra.Command {
 			if resp.StatusCode >= 400 {
 				return fmt.Errorf("listing contacts: %w", decodeAPIError(resp))
 			}
-			if jsonOutput {
+			if useJSON {
 				return printRawJSON(resp.Body)
 			}
 			var raw any
@@ -60,6 +65,7 @@ func contactsListCmd() *cobra.Command {
 		},
 	}
 	addListFlags(cmd, &f)
+	addListOutputFlags(cmd, &output)
 	return cmd
 }
 

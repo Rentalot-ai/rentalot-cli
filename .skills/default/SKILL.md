@@ -107,6 +107,8 @@ Settings updates send `businessName` only when `--business-name` is supplied.
 Use `rentalot-cli settings update --business-name ""` to clear the business name.
 An omitted flag leaves it unchanged.
 
+The `properties list`, `contacts list`, `showings list`, and `conversations list` commands accept `--output json` to preserve the full API response envelope and pagination metadata. They default to `--output table`. Other formats are rejected; global `--json` still selects JSON even with `--output table`.
+
 ## Global Flags
 
 ```bash
