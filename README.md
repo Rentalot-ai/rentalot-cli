@@ -120,6 +120,25 @@ Lead qualification is development-only behind a server-side gate. Production v1 
 
 The CLI has no workflow-run or workflow-execution subcommands. Go library callers using the generic HTTP client must inspect response status and call `rentalotcli.DecodeError` for API failures. A decoded `404` is not retryable, and the client does not automatically retry reads or triggers.
 
+## Property image uploads
+
+The v1 image API accepts `image/jpeg`, `image/png`, and `image/webp`, up to 10 MB per image. Convert HEIC to one of these formats before uploading.
+
+```bash
+rentalot properties images presign "$PROPERTY_ID" \
+  --file-name living-room.jpg --content-type image/jpeg --size-bytes 123456
+# Upload the file bytes to the returned presigned URL, then confirm its r2Key:
+rentalot properties images confirm "$PROPERTY_ID" \
+  --r2-key "$R2_KEY" --content-type image/jpeg --size-bytes 123456 \
+  --alt-text "Living room"
+rentalot properties images presign-batch "$PROPERTY_ID" --file presign.json
+rentalot properties images confirm-batch "$PROPERTY_ID" --file confirm.json
+```
+
+These commands send metadata and print the API response; upload the bytes to the returned URL separately. Batch files contain `{"images": [...]}` with the same camelCase fields: `fileName`, `contentType`, and `sizeBytes` for presign (at most 20 images), or `r2Key`, `contentType`, `sizeBytes`, and optional `altText` for confirm.
+
+Confirm and confirm-batch validate the uploaded bytes as a real JPEG, PNG, or WebP and screen for NSFW content. A rejection returns **HTTP 422** and the server deletes the rejected upload. The CLI preserves the API's rejection reason and reports the deletion. Use a suitable replacement image and start a new presign/upload rather than confirming the deleted key again. After a failed batch, do not assume other images were confirmed. Byte validation and NSFW screening remain server-owned.
+
 ## Library Usage
 
 ```go

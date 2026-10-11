@@ -404,11 +404,11 @@ All optional: `url`, `events`, `active`, `description`
 
 ## V1PresignImageRequest
 
-Required: `fileName`, `contentType` (`image/jpeg`/`image/png`/`image/webp`/`image/heic`), `sizeBytes` (max 10MB)
+Required: `fileName`, `contentType` (`image/jpeg`/`image/png`/`image/webp`), `sizeBytes` (max 10MB)
 
 ## V1ConfirmImageRequest
 
-Required: `r2Key`, `contentType`, `sizeBytes`
+Required: `r2Key`, `contentType` (`image/jpeg`/`image/png`/`image/webp`), `sizeBytes` (max 10MB)
 
 Optional: `altText`
 
@@ -419,6 +419,12 @@ Optional: `altText`
 ## V1ConfirmImageBatchRequest
 
 `{ "images": [{ "r2Key", "contentType", "sizeBytes", "altText?" }] }`
+
+Presign and confirm (including batches) no longer accept `image/heic`. Convert HEIC files to JPEG, PNG, or WebP before uploading.
+
+Confirm and confirm-batch inspect the uploaded bytes for a real JPEG, PNG, or WebP image and screen for NSFW content. Rejected images return HTTP `422`; the server deletes the rejected upload. Preserve the server's error detail and start a new presign/upload with a suitable replacement image instead of confirming the deleted key again. Do not assume other batch images were confirmed after a failed batch.
+
+CLI commands are under `rentalot properties images`: `presign`, `confirm`, `presign-batch`, and `confirm-batch`. Single requests use `--content-type` and `--size-bytes`, with `--file-name` for presign or `--r2-key` and optional `--alt-text` for confirm. Batch requests read the corresponding `{"images": [...]}` object with `--file`. These commands send metadata; callers upload bytes to the returned presigned URL separately.
 
 ## ImportImagesRequest
 

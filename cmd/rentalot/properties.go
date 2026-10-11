@@ -23,6 +23,7 @@ func init() {
 		propertiesCreateCmd(),
 		propertiesUpdateCmd(),
 		propertiesDeleteCmd(),
+		propertiesImagesCmd(),
 	)
 }
 

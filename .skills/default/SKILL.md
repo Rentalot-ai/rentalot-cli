@@ -58,6 +58,10 @@ rentalot-cli properties get <id>
 rentalot-cli properties create              # --address --monthly-rent --bedrooms --bathrooms
 rentalot-cli properties update <id>         # --title --monthly-rent --property-type, etc.
 rentalot-cli properties delete <id>
+rentalot properties images presign <id>    # --file-name --content-type --size-bytes
+rentalot properties images confirm <id>    # --r2-key --content-type --size-bytes [--alt-text]
+rentalot properties images presign-batch <id> # --file presign.json ({"images": [...]})
+rentalot properties images confirm-batch <id> # --file confirm.json ({"images": [...]})
 
 # Contacts
 rentalot-cli contacts list
@@ -110,6 +114,8 @@ An omitted flag leaves it unchanged.
 The `properties list`, `contacts list`, `showings list`, and `conversations list` commands accept `--output json` to preserve the full API response envelope and pagination metadata. They default to `--output table`. Other formats are rejected; global `--json` still selects JSON even with `--output table`.
 
 Workflow availability is server-owned. Production v1 workflow, run, and session lists omit development-only lead qualification and its associated records; gated reads return `404 Not Found`, and triggering it is gated. OpenAPI shapes are unchanged. The workflow/session list commands accept empty lists and preserve the envelope with `--json`; their get commands return errors for `404` without successful resource output or automatic retries. A `404` can also mean an absent record, so check the selected environment and list available workflows instead of polling. There are no CLI workflow-run or workflow-execution subcommands; generic Go client callers must check HTTP status and decode API errors.
+
+Image commands send upload metadata; upload the image bytes to the returned presigned URL before confirmation. Supported MIME types are `image/jpeg`, `image/png`, and `image/webp`, up to 10 MB. HEIC must be converted first. Confirm and confirm-batch screen the actual bytes for valid images and NSFW content; HTTP 422 means the rejected upload was deleted. The CLI preserves the server reason and reports that a suitable replacement needs a new presign/upload, with no automatic retry.
 
 ## Global Flags
 
