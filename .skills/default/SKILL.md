@@ -109,6 +109,8 @@ An omitted flag leaves it unchanged.
 
 The `properties list`, `contacts list`, `showings list`, and `conversations list` commands accept `--output json` to preserve the full API response envelope and pagination metadata. They default to `--output table`. Other formats are rejected; global `--json` still selects JSON even with `--output table`.
 
+Workflow availability is server-owned. Production v1 workflow, run, and session lists omit development-only lead qualification and its associated records; gated reads return `404 Not Found`, and triggering it is gated. OpenAPI shapes are unchanged. The workflow/session list commands accept empty lists and preserve the envelope with `--json`; their get commands return errors for `404` without successful resource output or automatic retries. A `404` can also mean an absent record, so check the selected environment and list available workflows instead of polling. There are no CLI workflow-run or workflow-execution subcommands; generic Go client callers must check HTTP status and decode API errors.
+
 ## Global Flags
 
 ```bash

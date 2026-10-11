@@ -289,6 +289,8 @@ Optional: `sequenceStep` (integer)
 
 ## WorkflowTemplate (List)
 
+Availability is server-owned: production v1 workflow, run, and session lists omit development-only lead qualification and its associated records. Gated detail reads return `404 Not Found`, and triggering lead qualification is gated. The OpenAPI shapes below are unchanged by this gate; their presence does not guarantee production availability. Empty filtered lists are valid responses. Treat gated `404` responses as terminal errors rather than successful resources or a reason to poll.
+
 | Field | Type | Description |
 |-------|------|-------------|
 | id | string (uuid) | |

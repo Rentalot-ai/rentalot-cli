@@ -40,7 +40,7 @@ lint: lint-go ## Run all linters
 
 lint-go: ## Run Go linters
 	@if command -v golangci-lint >/dev/null 2>&1; then \
-		golangci-lint run; \
+		golangci-lint run --allow-serial-runners; \
 	else \
 		echo "golangci-lint not installed, running go vet"; \
 		go vet ./...; \

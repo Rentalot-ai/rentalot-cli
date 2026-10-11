@@ -73,6 +73,8 @@ Scheduling through natural conversation — no booking form needed.
 
 Multi-step automated sequences: pre-screening, qualification, follow-ups, document collection.
 
+Lead qualification is development-only behind a server-side gate. Production v1 lists omit its workflows, runs, and sessions; gated detail reads return `404 Not Found`, and triggering it is gated. Other workflows follow their usual server access rules. The API schemas are unchanged, so use the selected environment's list responses to discover available workflows.
+
 **How they work:**
 1. Triggered manually, via management chat, or shareable link
 2. Steps execute in order: messages, waits, questions, branches
@@ -84,7 +86,7 @@ Multi-step automated sequences: pre-screening, qualification, follow-ups, docume
 | Template | Purpose | Trigger |
 |----------|---------|---------|
 | **Pre-Screening** | Customizable questionnaire (name, budget, timeline) | Shareable link / manual |
-| **Lead Qualification** | Budget, move-in date, must-haves + property matching | Shareable link / manual |
+| **Lead Qualification (development-only)** | Budget, move-in date, must-haves + property matching | Shareable link / manual, subject to the server gate |
 | **Property Blast** | Send listing + auto follow-ups (24h, 48h) | Manual |
 | **Showing Follow-Up** | Post-showing feedback collection | Auto (showing completed) |
 | **Application Nudge** | Remind interested prospects to apply | Manual |
@@ -111,7 +113,7 @@ Multi-step automated sequences: pre-screening, qualification, follow-ups, docume
 ### Starting Workflows
 
 - **Dashboard:** Workflows > Active Runs > Start Workflow
-- **Management Chat:** "Start lead qualification for John Smith"
+- **Management Chat:** "Start lead qualification for John Smith" (development-only, subject to the server gate)
 - **Shareable Link:** Auto-enrolls prospects. Share on listings, flyers, signs, email signatures
 
 ### Reviewing Applications
