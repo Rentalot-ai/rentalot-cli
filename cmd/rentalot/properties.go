@@ -13,6 +13,8 @@ var propertiesCmd = &cobra.Command{
 	Short: "Manage rental properties",
 }
 
+const propertyDescriptionRule = "Descriptions must not contain phone numbers, email addresses, or website links; use the listing contact form."
+
 func init() {
 	rootCmd.AddCommand(propertiesCmd)
 	propertiesCmd.AddCommand(
@@ -160,7 +162,7 @@ func propertiesCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a property with canonical API fields",
-		Long:  "Create a property with canonical v1 fields. Trial writes must remain private; omit --property-type for the development-only trial first job.",
+		Long:  "Create a property with canonical v1 fields. Trial writes must remain private; omit --property-type for the development-only trial first job.\n\n" + propertyDescriptionRule,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			body, err := buildPropertyBody(cmd, &f, true)
 			if err != nil {
@@ -191,6 +193,7 @@ func propertiesUpdateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update <id>",
 		Short: "Update a property with canonical API fields",
+		Long:  "Update a property with canonical v1 fields.\n\n" + propertyDescriptionRule,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			body, err := buildPropertyBody(cmd, &f, false)
@@ -233,7 +236,7 @@ func addPropertyFlags(cmd *cobra.Command, f *propertyFlags) {
 	_ = flags.MarkDeprecated("type", "use --property-type instead")
 	flags.StringVar(&f.status, "status", "", "status: active, rented, inactive, archived")
 	flags.BoolVar(&f.isPublic, "is-public", false, "whether the property is publicly listed (trial writes must remain private)")
-	flags.StringVar(&f.description, "description", "", "property description")
+	flags.StringVar(&f.description, "description", "", "property description (no phone numbers, email addresses, or website links; use the listing contact form)")
 }
 
 func buildPropertyBody(cmd *cobra.Command, f *propertyFlags, creating bool) (map[string]any, error) {

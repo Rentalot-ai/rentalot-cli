@@ -56,13 +56,15 @@ Required: `address`, `monthlyRent`, `bedrooms`, `bathrooms`
 | availabilityDate | string (date) | Available date |
 | status | string | `active` / `rented` / `inactive` / `archived` |
 | isPublic | boolean | Public listing visibility; trial writes must remain private |
-| description | string | Property description |
+| description | string | Property description; must not contain phone numbers, email addresses, or website links. Use the listing contact form. |
 
 The general v1 schema accepts canonical `propertyType` values when the server-side property-types feature is enabled. The development-only trial first-job path should omit `propertyType` and keep `isPublic` false; trial eligibility and limits remain server-owned.
 
 ## UpdatePropertyRequest
 
 Same canonical fields as `CreatePropertyRequest`, all optional. Send only fields to change. Use `title`, `propertyType`, and `monthlyRent`, never legacy `name`, `type`, or `rent` JSON keys.
+
+Create and update reject descriptions containing contact info with HTTP `400` and a validation message directing users to the listing contact form. The CLI preserves this message without retrying. Contact detection remains server-owned. The offline [OpenAPI contract excerpt](../../cmd/rentalot/testdata/property-description.openapi.json) records this description-field metadata and illustrative validation responses; it is not a full server schema snapshot.
 
 The CLI exposes `unitNumber` as `--unit-number` on create and update. An empty or whitespace-only value sends null; an absent flag omits the field. `buildingId` is response-only and cannot be set.
 

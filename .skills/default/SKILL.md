@@ -126,6 +126,8 @@ Property writes use `title`, `address`, `monthlyRent`, `bedrooms`, `bathrooms`, 
 
 Property list filters use repeatable `--property-type` flags, which encode repeated singular `propertyType` query parameters. Use `--bedroom-type studio` for the exact v1 Studio filter, encoded as `bedroomType=studio`; Studio means `bedrooms=0`. The generic `--filter key=value` flag can be combined with these filters.
 
+Property `--description` on create and update must not contain phone numbers, email addresses, or website links. Use the listing contact form for contact information. The server rejects contact info with HTTP `400`; the CLI preserves the validation message without retrying. Remove the contact info before resubmitting.
+
 Contact writes use `role`, not `type`. A single contact create requires `--name` and at least one of `--email` or `--phone`; empty optional values are omitted. The role values are `prospect`, `tenant`, `landlord`, `property_manager`, `vendor`, and `other`.
 
 ```bash

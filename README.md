@@ -72,6 +72,8 @@ Trial limits are shared by the account across active keys and key rotation: 20 r
 
 Property create requires `--address`, `--monthly-rent`, `--bedrooms`, and `--bathrooms`. Optional canonical fields include `--title`, `--unit-number`, `--property-type`, `--status`, `--is-public`, `--city`, `--state`, `--zip`, and `--description`. Canonical property types are `house`, `apartment`, `condo`, `townhouse`, and `room`; a studio is represented by `--bedrooms 0`. For the development-only trial first job, omit `--property-type` because that field is separately feature-gated, and keep the write private.
 
+Property descriptions must not contain phone numbers, email addresses, or website links. Use the listing contact form for contact information. The v1 API validates descriptions on create and update and returns HTTP `400` when they contain contact info. The CLI preserves the server's validation message and does not retry; remove contact info from `--description` before submitting again.
+
 ```bash
 rentalot properties create \
   --title "Downtown Loft" --address "123 Main St" \
