@@ -86,6 +86,14 @@ Older `--name`, `--type`, and `--rent` property flags, plus contact `--type`, ar
 
 Use `--json` to preserve the API response envelope. A `401` means the key is missing, expired, or revoked, so configure an active key at the same origin. A `429` with `Retry-After` is a timed server instruction; the CLI reports it and does not retry automatically because attempts consume quota. A trial lifetime exhaustion response has no timed retry; upgrade to continue, and do not rotate keys to bypass account-wide limits.
 
+## Workflow availability
+
+Lead qualification is development-only behind a server-side gate. Production v1 workflow, run, and session lists omit it and its associated records; a filtered list may therefore be empty. Reading a gated workflow, run, or session returns `404 Not Found`, and triggering lead qualification is gated too. Other workflows remain available according to the server's access rules. OpenAPI request and response shapes are unchanged; a schema entry does not promise availability in every environment.
+
+`rentalot workflows list` and `rentalot sessions list` display the records returned by the server. `--json` preserves the response envelope, including pagination and empty lists. Their `get` commands report a gated `404` as an error and exit with status 1, without printing a successful resource or retrying. A `404` alone cannot distinguish a gated record from an absent one; check the selected server environment and available workflows rather than retrying it in a loop.
+
+The CLI has no workflow-run or workflow-execution subcommands. Go library callers using the generic HTTP client must inspect response status and call `rentalotcli.DecodeError` for API failures. A decoded `404` is not retryable, and the client does not automatically retry reads or triggers.
+
 ## Library Usage
 
 ```go
