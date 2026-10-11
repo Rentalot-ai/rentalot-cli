@@ -515,6 +515,14 @@ this field as `settings update --business-name "Cedar Rentals"`; use
 | notifyProspectOnReview | boolean | Email prospect on review |
 | emailProspectMatches | boolean | Email matching properties |
 | schedulingEmailEnabled | boolean | Scheduling confirmations |
+| dailyLeasingBriefEnabled | boolean | Daily leasing brief emails |
+| dailyLeasingBriefNoActivityEnabled | boolean | Daily leasing brief emails when there is no activity |
+
+The CLI exposes the daily brief preferences through
+`settings update --daily-leasing-brief-enabled=true` and
+`settings update --daily-leasing-brief-no-activity-enabled=false`.
+Only supplied preferences are sent in `emailPreferences`; `=false` explicitly
+disables a preference.
 
 ## FollowupSettings
 
