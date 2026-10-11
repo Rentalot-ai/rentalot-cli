@@ -99,6 +99,8 @@ Older `--name`, `--type`, and `--rent` property flags, plus contact `--type`, ar
 
 Use `--json` to preserve the API response envelope. A `401` means the key is missing, expired, or revoked, so configure an active key at the same origin. A `429` with `Retry-After` is a timed server instruction; the CLI reports it and does not retry automatically because attempts consume quota. A trial lifetime exhaustion response has no timed retry; upgrade to continue, and do not rotate keys to bypass account-wide limits.
 
+For API requests that supply `Idempotency-Key`, the server atomically claims the key before executing the operation. Concurrent requests or an unknown outcome return `409` with `Retry-After: 1` and same-key retry or reconciliation guidance. Wait at least one second before retrying the same request with the same key; if the outcome remains unknown, reconcile the original operation through resource or job read-back. Do not use a new key to bypass the conflict, as that can duplicate the operation. Other `409` conflicts do not imply a timed retry. The CLI does not retry automatically and currently has no flag to supply `Idempotency-Key`.
+
 ## Business name
 
 To read or change the account business name:

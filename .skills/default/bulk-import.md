@@ -128,7 +128,7 @@ Requires Pro or Scale plan. Max 500 properties per request. Async processing.
 
 Field names are flexible — use camelCase (`monthlyRent`) or common alternatives (`rent`, `beds`, `street_address`, `monthly_rent`). Same value coercion as dashboard import.
 
-Supports `Idempotency-Key` header.
+Supports the `Idempotency-Key` header for API requests. The server atomically claims the key before execution. Concurrent requests or an unknown outcome return `409` with `Retry-After: 1` and same-key retry or reconciliation guidance. Wait at least one second before retrying the same payload with the same key. If the outcome remains unknown, reconcile the original import through job status read-back when a job ID is available. Do not submit with a new key to bypass the conflict, as that can create a duplicate import. The CLI currently has no flag to supply this header and does not retry automatically.
 
 ### Response (202 Accepted)
 

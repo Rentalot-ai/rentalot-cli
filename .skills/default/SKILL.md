@@ -152,6 +152,8 @@ rentalot properties list --bedroom-type studio --filter status=active
 
 Use `--json` for the canonical response envelope. The CLI does not create accounts or API keys. After a key expires or is revoked, issue or configure an appropriate active key at the same server origin. A `429` with `Retry-After` is a timed server instruction, but the CLI does not retry automatically because failed attempts consume quota. A `429` without a timed retry can indicate trial lifetime exhaustion; upgrade to continue rather than rotating keys.
 
+For API requests that supply `Idempotency-Key`, the server atomically claims the key before execution. Concurrent requests or an unknown outcome return `409` with `Retry-After: 1` and same-key retry or reconciliation guidance. Wait at least one second, retain the same key and request when retrying, and reconcile an unknown outcome through resource or job read-back. Do not replace the key to bypass the conflict; doing so can duplicate the operation. Other `409` conflicts do not imply a timed retry. The CLI does not retry automatically and currently has no flag to supply `Idempotency-Key`.
+
 ## Development
 
 ```bash
