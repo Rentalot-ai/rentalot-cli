@@ -1,6 +1,9 @@
 project: rentalot-cli
 versions:
-    unreleased: {}
+    unreleased:
+        internal:
+            added:
+                - Add offline golden tests for CLI stdout, stderr, and exit status with an explicit -update workflow.
     0.2.1:
         date: 2026-10-09
         fixed:

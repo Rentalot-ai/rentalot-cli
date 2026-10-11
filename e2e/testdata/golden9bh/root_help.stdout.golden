@@ -1,0 +1,26 @@
+rentalot — CLI tool for managing Rentalot rental properties, contacts, and workflows
+
+Commands:
+  bulk-import    Import properties from a CSV/JSON file
+  completion     Generate the autocompletion script for the specified shell
+  config         Manage ~/.config/rentalot-cli/config.yaml
+  contacts       Manage contacts (tenants, owners, prospects)
+  conversations  Browse contact conversations
+  properties     Manage rental properties
+  sessions       Manage AI-driven chat sessions
+  settings       Manage account settings
+  showings       Manage property showings
+  version        Display version information
+  webhooks       Manage webhook endpoints
+  workflows      Manage automation workflows
+
+Flags:
+      --config string  config file (default "<CONFIG_FILE>")
+  -h, --help  help for rentalot
+      --json  output as JSON
+      --no-color  disable colored output
+      --timeout duration  HTTP request timeout, including response body (must be positive) (default 30s)
+  -v, --version  version for rentalot
+
+Use rentalot [command] --help for more information about a command.
+

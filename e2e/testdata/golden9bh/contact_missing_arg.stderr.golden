@@ -1,0 +1,13 @@
+Error: accepts 1 arg(s), received 0
+Usage:
+  rentalot contacts get <id> [flags]
+
+Flags:
+  -h, --help   help for get
+
+Global Flags:
+      --config string      config file (default "<CONFIG_FILE>")
+      --json               output as JSON
+      --no-color           disable colored output
+      --timeout duration   HTTP request timeout, including response body (must be positive) (default 30s)
+

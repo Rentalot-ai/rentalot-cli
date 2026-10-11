@@ -1,0 +1,32 @@
+{
+  "data": [
+    {
+      "channelPreference": "email",
+      "createdAt": "2026-09-01T12:00:00Z",
+      "email": "ada@example.com",
+      "id": "30fd1962-01ca-4de9-9256-852fc7830a9a",
+      "language": "en",
+      "name": "Ada Lovelace",
+      "phone": "+15125550101",
+      "referralSource": null,
+      "role": "tenant",
+      "source": "website",
+      "status": "renter",
+      "updatedAt": "2026-09-02T12:00:00Z"
+    },
+    {
+      "channelPreference": null,
+      "createdAt": "2026-09-03T12:00:00Z",
+      "email": null,
+      "id": "145b9204-85a7-407c-a34d-0847810c5b64",
+      "language": "es",
+      "name": "José García",
+      "phone": "+15125550102",
+      "referralSource": null,
+      "role": "prospect",
+      "source": null,
+      "status": "prospect",
+      "updatedAt": "2026-09-03T12:00:00Z"
+    }
+  ]
+}
