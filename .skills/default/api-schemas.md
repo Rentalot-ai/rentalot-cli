@@ -3,6 +3,12 @@
 > All OpenAPI component schemas for the Rentalot v1 API.
 > Source: https://rentalot.ai/api/v1/openapi.json
 
+## Idempotency retry contract
+
+The OpenAPI info description specifies that the server atomically claims `Idempotency-Key` before executing an operation. Concurrent requests or an unknown outcome return `409` with `Retry-After: 1` and same-key retry or reconciliation guidance. Wait at least one second before retrying the same request with the same key. If the outcome remains unknown, reconcile the original operation through resource or job read-back; do not switch to a new key, which can duplicate the operation. This guidance applies to idempotency conflicts, not every `409`.
+
+This is a description-only contract update; endpoints and request/response schema shapes are unchanged. The CLI preserves server error guidance and retry metadata without automatic retries, and currently has no flag to supply `Idempotency-Key`.
+
 ## ID Types
 
 All IDs are `string (uuid)`:
