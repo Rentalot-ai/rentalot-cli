@@ -1,5 +1,5 @@
 
-.PHONY: help install i test test-v test-coverage lint lint-go format clean build run go-install uninstall sync-schema release patch minor major prep-release
+.PHONY: help install i test test-v test-coverage lint lint-go format clean build run go-install uninstall sync-schema release patch minor major prep-release hooks secret-scan
 
 MODULE_PATH=github.com/Rentalot-ai/rentalot-cli
 VERSION?=$(shell git tag --sort=-v:refname 2>/dev/null | head -1)
@@ -48,6 +48,18 @@ lint-go: ## Run Go linters
 
 format: ## Format code
 	go fmt ./...
+
+hooks: ## Install the gitleaks pre-commit secret scan into the active git hooks dir (idempotent)
+	@hook="$$(git rev-parse --path-format=absolute --git-path hooks)/pre-commit"; \
+	if grep -qs 'gitleaks git' "$$hook"; then echo "gitleaks pre-commit already installed: $$hook"; else \
+		mkdir -p "$$(dirname "$$hook")"; \
+		[ -f "$$hook" ] || printf '#!/usr/bin/env sh\n' > "$$hook"; \
+		printf '%s\n' '# --- gitleaks secret scan (make hooks) ---' 'gitleaks git --pre-commit --staged --redact --verbose --no-banner || exit 1' >> "$$hook"; \
+		chmod +x "$$hook"; echo "installed gitleaks pre-commit: $$hook"; \
+	fi
+
+secret-scan: ## Scan the full working tree for secrets with gitleaks (config: .gitleaks.toml)
+	@gitleaks dir . --redact=100 --no-banner --log-level warn
 
 clean: ## Clean build artifacts
 	go clean

@@ -265,6 +265,8 @@ make lint           # Run linters
 make format         # Format code
 ```
 
+Commits are scanned for secrets with [gitleaks](https://github.com/gitleaks/gitleaks) (`mise install` provides the pinned version). Run `make hooks` once per clone to install the pre-commit check, and `make secret-scan` to scan the whole tree. Config lives in `.gitleaks.toml`.
+
 ## Shell Completion
 
 ```bash

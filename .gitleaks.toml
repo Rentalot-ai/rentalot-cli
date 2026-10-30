@@ -1,0 +1,18 @@
+title = "rentalot-cli gitleaks config"
+
+# Commit-time secret scan (`make hooks`) and full-tree scan (`make secret-scan`).
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "gitignored local/build files and sops-encrypted files"
+paths = [
+  '''(^|/)[^/]+\.enc$''',
+  '''^(\.worktrees|bin)/''',
+  '''^\.env$''',
+  '''^rentalot$''',
+]
+
+[[allowlists]]
+description = "fake credentials in Go test fixtures"
+paths = ['''_test\.go$''']
